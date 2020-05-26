@@ -1,0 +1,10 @@
+target
+work
+
+# Eclipse project files
+.settings
+.metadata
+
+.DS_Store
+.classpath
+.project
