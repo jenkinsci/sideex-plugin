@@ -6,6 +6,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import jenkins.org.apache.commons.validator.routines.UrlValidator;
 import net.sf.json.JSONArray;
@@ -43,7 +45,7 @@ public class HTTPItem extends BuildDropDownList {
     }
     
     @Override
-    public SideeXWebServiceClientAPI getClientAPI(@Nonnull AbstractBuild<?,?> build, @Nonnull BuildListener listener,
+    public SideeXWebServiceClientAPI getClientAPI(@Nonnull Run<?, ?> build, @Nonnull TaskListener listener,
 			String baseURL, ProtocalType type) throws InterruptedException, IOException {
 		SideeXWebServiceClientAPI clientAPI = new SideeXWebServiceClientAPI(baseURL, type);
 		

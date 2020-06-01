@@ -25,17 +25,20 @@ import hudson.model.Build;
 import hudson.model.BuildListener;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.org.apache.commons.validator.routines.UrlValidator;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import wagu.Block;
 import wagu.Board;
 
-public class SideeXJenkinsPlugin extends Builder {
+public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 	private final BuildDropDownList protocalMenu;
 	private String stateTime;
 	private String inputsFilePath;
@@ -99,7 +102,7 @@ public class SideeXJenkinsPlugin extends Builder {
 	}
 
 	@Override
-	public boolean perform(Build<?, ?> build, Launcher launcher, BuildListener listener)
+	public void perform(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
 			throws InterruptedException, IOException {
 		SideeXWebServiceClientAPI wsClient = null;
 		// Dropdown menu
@@ -117,13 +120,12 @@ public class SideeXJenkinsPlugin extends Builder {
 			} catch (Exception e) {
 				listener.error(e.getMessage());
 				build.setResult(Result.FAILURE);
-				return true;
 			}
 		}
 		
 		
-		FilePath inputsFilePath = build.getProject().getSomeWorkspace().child(getInputsFilePath());
-		FilePath reportFolderPath = build.getProject().getSomeWorkspace().child(getReportFolderPath());
+		FilePath inputsFilePath = workspace.child(getInputsFilePath());
+		FilePath reportFolderPath = workspace.child(getReportFolderPath());
 		File inputsFile = new File(inputsFilePath.getRemote());
 		File reportFolder = new File(reportFolderPath.getRemote());
 		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
@@ -135,7 +137,6 @@ public class SideeXJenkinsPlugin extends Builder {
 		if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
 			listener.error("Specified test suites file path '" + inputsFilePath + "' does not exist.");
 			build.setResult(Result.FAILURE);
-			return true;
 		}
 
 		fileParams.put(inputsFile.getName(), inputsFile);
@@ -218,11 +219,9 @@ public class SideeXJenkinsPlugin extends Builder {
 			}
 			wsClient.setHTTPSToDefault();
 		}
-		
-		return true;
 	}
 	
-	void parseLog(String logs, BuildListener listener) {
+	void parseLog(String logs, TaskListener listener) {
 		JSONObject log = JSONObject.fromObject(logs);
 		for (int i = 0; i < log.getJSONArray("logs").size(); i++) {
 			showRunnerLog(JSONObject.fromObject(log.getJSONArray("logs").get(i)).getString("type"),
@@ -230,7 +229,7 @@ public class SideeXJenkinsPlugin extends Builder {
 		}
 	}
 
-	void showRunnerLog(String type, String str, BuildListener listener) {
+	void showRunnerLog(String type, String str, TaskListener listener) {
 		String output = "";
 		switch (type) {
 		case "info":
