@@ -1,7 +1,7 @@
+package sideex;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -10,14 +10,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Build;
 import hudson.model.BuildListener;
@@ -26,41 +28,105 @@ import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
+import jenkins.org.apache.commons.validator.routines.UrlValidator;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import wagu.Block;
 import wagu.Board;
 
 public class SideeXJenkinsPlugin extends Builder {
-	private String baseURL;
+	private final BuildDropDownList protocalMenu;
 	private String stateTime;
 	private String inputsFilePath;
 	private String reportFolderPath;
-
+	
+	
 	@DataBoundConstructor
-	public SideeXJenkinsPlugin(String baseURL, String stateTime, String inputsFilePath, String reportFolderPath) {
-		this.baseURL = StringUtils.trim(baseURL);
-		this.stateTime = StringUtils.trim(stateTime);
-		this.inputsFilePath = StringUtils.trim(inputsFilePath);
-		this.reportFolderPath = StringUtils.trim(reportFolderPath);
+	public SideeXJenkinsPlugin(BuildDropDownList protocalMenu, String stateTime, String inputsFilePath, String reportFolderPath) {
+		this.protocalMenu = protocalMenu;
+		this.stateTime = stateTime;
+		this.inputsFilePath = inputsFilePath;
+		this.reportFolderPath = reportFolderPath;
+	}
 
-		if (this.baseURL.charAt(this.baseURL.length() - 1) != '/') {
-			this.baseURL = this.baseURL + "/";
+	@Extension
+	public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+		@Override
+		public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+			return jobType == FreeStyleProject.class;
 		}
-		if (this.stateTime == "" || Long.valueOf(this.stateTime) < 2000) {
-			this.stateTime = "2000";
+
+		@Override
+		public String getDisplayName() {
+			return "Execute SideeX Web Testing";
+		}
+
+		public List<BuildDropDownListDescriptor> getProtocalMenu() {
+			List<BuildDropDownListDescriptor> descriptors = Jenkins.getActiveInstance()
+					.getDescriptorList(BuildDropDownList.class);
+			List<BuildDropDownListDescriptor> supportedStrategies = new ArrayList<>(descriptors.size());
+
+			for (BuildDropDownListDescriptor descriptor : descriptors) {
+				if (descriptor.isApplicableAsBuildStep()) {
+					supportedStrategies.add(descriptor);
+				}
+			}
+
+			return supportedStrategies;
+		}
+		
+		public FormValidation doCheckStateTime(@QueryParameter String stateTime) {
+			try {
+				Long.valueOf(stateTime);
+				return FormValidation.ok();
+			} catch (NumberFormatException e) {
+				return FormValidation.error("Please enter a periodically time");
+			}
+		}
+		
+		public FormValidation doCheckInputsFilePath(@QueryParameter String inputsFilePath) {
+			try {
+				File inputsFile = new File(inputsFilePath);
+				if(inputsFile.isDirectory() || !inputsFile.exists()) {
+					throw new Exception();
+				}
+				return FormValidation.ok();
+			} catch (Exception e) {
+				return FormValidation.error("Please enter a test suites file path");
+			}
 		}
 	}
 
 	@Override
 	public boolean perform(Build<?, ?> build, Launcher launcher, BuildListener listener)
 			throws InterruptedException, IOException {
-		HttpService httpService = new HttpService();
+		SideeXWebServiceClientAPI wsClient = null;
+		// Dropdown menu
+		if (protocalMenu instanceof HTTPItem) {
+			HTTPItem httpItem = (HTTPItem) protocalMenu;
+			wsClient = this.protocalMenu.getClientAPI(build, listener,httpItem.getBaseURL(), ProtocalType.HTTP);
+		} else if(protocalMenu instanceof HTTPSDisableItem) {
+			HTTPSDisableItem httpsDisableItem = (HTTPSDisableItem) protocalMenu;
+			wsClient = this.protocalMenu.getClientAPI(build, listener,httpsDisableItem.getBaseURL(), ProtocalType.HTTPS_DISABLE);
+		} else if(protocalMenu instanceof HTTPSEnableItem) {
+			HTTPSEnableItem httpsEnableItem = (HTTPSEnableItem) protocalMenu;
+			wsClient = this.protocalMenu.getClientAPI(build, listener,httpsEnableItem.getBaseURL(), ProtocalType.HTTPS_ENABLE);
+			try {
+				wsClient.setCertificate(httpsEnableItem.getCaFilePath());
+			} catch (Exception e) {
+				listener.error(e.getMessage());
+				build.setResult(Result.FAILURE);
+				return true;
+			}
+		}
+		
+		
 		FilePath inputsFilePath = build.getProject().getSomeWorkspace().child(getInputsFilePath());
 		FilePath reportFolderPath = build.getProject().getSomeWorkspace().child(getReportFolderPath());
 		File inputsFile = new File(inputsFilePath.getRemote());
 		File reportFolder = new File(reportFolderPath.getRemote());
-		String tokenResponse = "", token = "", stateResponse = "", state = "", onlineReportURL = "", downloadReportURL = "", logUrl = "";
+		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
 		boolean running = true, passed, first = true;
 		Map<String, File> fileParams = new HashMap<String, File>();
 		Map<String, String> params = new HashMap<String, String>();
@@ -74,10 +140,10 @@ public class SideeXJenkinsPlugin extends Builder {
 
 		fileParams.put(inputsFile.getName(), inputsFile);
 		try {
-			tokenResponse = httpService.runTestSuite(getBaseURL() + "sideex-webservice", fileParams);
+			tokenResponse = wsClient.runTestSuite(fileParams);
 		} catch (IOException e) {
 			listener.error(
-					"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's base URL settings and the state of your server");
+					"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's settings and the state of your server");
 			throw e;
 		}
 
@@ -89,7 +155,7 @@ public class SideeXJenkinsPlugin extends Builder {
 				params.put("token", token);
 
 				try {
-					stateResponse = httpService.getState(getBaseURL() + "sideex-webservice-state", params);
+					stateResponse = wsClient.getState(params);
 				} catch (IOException e) {
 					listener.error(
 							"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's base URL settings and the state of your server");
@@ -105,8 +171,7 @@ public class SideeXJenkinsPlugin extends Builder {
 					listener.getLogger().println("SideeX WebSerivce state is " + state);
 					running = false;
 					passed = JSONObject.fromObject(stateResponse).getJSONObject("reports").getBoolean("passed");
-					onlineReportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("onlineReportURL").toString();
-					downloadReportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("downloadReportURL").toString();
+					reportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("url").toString();
 					logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
 					summary = JSONObject.fromObject(stateResponse).getJSONObject("reports").getJSONArray("summarry");
 
@@ -115,10 +180,11 @@ public class SideeXJenkinsPlugin extends Builder {
 							reportFolder.mkdir();
 						}
 						FileUtils.cleanDirectory(reportFolder);
-						httpService.download(getBaseURL() + "sideex-webservice-reports", params,
-								reportFolderPath.getRemote() + "/reports.zip");
-						httpService.download(getBaseURL() + "sideex-webservice-logs", params,
-								reportFolderPath.getRemote() + "/logs.zip");
+						Map<String, String> formData = new HashMap<String, String>();
+	                    formData.put("token", token);
+	                    wsClient.download(params, reportFolderPath.getRemote() + "/logs.zip", 1);
+	                    formData.put("file", "reports.zip");
+	                    wsClient.download(formData, reportFolderPath.getRemote() + "/reports.zip", 0);
 						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/reports.zip",
 								reportFolderPath.getRemote());
 						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/logs.zip",
@@ -126,8 +192,7 @@ public class SideeXJenkinsPlugin extends Builder {
 						new File(reportFolderPath.getRemote() + "/reports.zip").delete();
 						new File(reportFolderPath.getRemote() + "/logs.zip").delete();
 					}
-					listener.getLogger().println("The test report can be viewed at " + onlineReportURL + ".");
-					listener.getLogger().println("The test report can be downloaded at " + downloadReportURL + ".");
+					listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
 					listener.getLogger().println("The log can be downloaded at " + logUrl + ".");
 
 					for (int i = 0; i < summary.size(); i++) {
@@ -151,42 +216,12 @@ public class SideeXJenkinsPlugin extends Builder {
 					Thread.sleep(Long.valueOf(this.stateTime));
 				}
 			}
+			wsClient.setHTTPSToDefault();
 		}
-
+		
 		return true;
 	}
-
-	@Extension
-	public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-		@Override
-		public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-			return jobType == FreeStyleProject.class;
-		}
-
-		@Override
-		public String getDisplayName() {
-			return "Execute SideeX Web Testing";
-		}
-
-		public FormValidation doCheckIpAddress(@QueryParameter String ipAddress) {
-			try {
-				new URL(ipAddress);
-				return FormValidation.ok();
-			} catch (Exception e) {
-				return FormValidation.error("Please enter a hostname");
-			}
-		}
-
-		public FormValidation doCheckStateTime(@QueryParameter String stateTime) {
-			try {
-				Long.valueOf(stateTime);
-				return FormValidation.ok();
-			} catch (NumberFormatException e) {
-				return FormValidation.error("Please enter a periodically time");
-			}
-		}
-	}
-
+	
 	void parseLog(String logs, BuildListener listener) {
 		JSONObject log = JSONObject.fromObject(logs);
 		for (int i = 0; i < log.getJSONArray("logs").size(); i++) {
@@ -216,10 +251,15 @@ public class SideeXJenkinsPlugin extends Builder {
 		}
 		listener.getLogger().println(output);
 	}
+	
+	public BuildDropDownList getProtocalMenu() {
+		return protocalMenu;
+	}
 
 	public String getInputsFilePath() {
 		return inputsFilePath;
 	}
+	
 
 	public String getStateTime() {
 		return stateTime;
@@ -227,10 +267,6 @@ public class SideeXJenkinsPlugin extends Builder {
 
 	public String getReportFolderPath() {
 		return reportFolderPath;
-	}
-
-	public String getBaseURL() {
-		return baseURL;
 	}
 
 	public String getSummarryFormat(JSONObject object, int size) {
@@ -242,7 +278,7 @@ public class SideeXJenkinsPlugin extends Builder {
 
 		ArrayList<String> summarryList = summarryObjectToList(object);
 		// Create a substring that matches the width of the right field
-		String suitesArray[] = conformWidthColumn(summarryList.get(0), rightRowWidth);
+		String suitesArray[] = wrapText(summarryList.get(0), rightRowWidth);
 		String suites = String.join("\n", suitesArray);
 
 		if (suitesArray.length == 1) {
@@ -312,7 +348,6 @@ public class SideeXJenkinsPlugin extends Builder {
 				block.get(block.size() - 1)
 						.setBelowBlock(new Block(board, rowWidthLength.get(0), rowWidthLength.get(1), row.get(0))
 								.setDataAlign(Block.DATA_CENTER));
-//				block.add(block.get(block.size() - 1).getBelowBlock().setDataAlign(Block.DATA_CENTER));
 				// Get the reference of the Header Block in the List and build the Block on the right.
 				block.add(block.get(block.size() - 1).getBelowBlock()
 						.setRightBlock(new Block(board, rowWidthLength.get(2), rowWidthLength.get(3), row.get(1))
@@ -322,7 +357,6 @@ public class SideeXJenkinsPlugin extends Builder {
 				block.get(block.size() - 1)
 						.setBelowBlock(new Block(board, rowWidthLength.get(0), rowWidthLength.get(1), row.get(0))
 								.setDataAlign(Block.DATA_CENTER));
-//				block.add(block.get(block.size() - 2).getBelowBlock().setDataAlign(Block.DATA_CENTER));
 				// Get the previous Block's reference to build the Block on the right.
 				block.add(block.get(block.size() - 1).getBelowBlock()
 						.setRightBlock(new Block(board, rowWidthLength.get(2), rowWidthLength.get(3), row.get(1))
@@ -333,7 +367,7 @@ public class SideeXJenkinsPlugin extends Builder {
 		return block.get(0);
 	}
 
-	public String[] conformWidthColumn(String str, int num) {
+	public String[] wrapText(String str, int num) {
 		ArrayList<String> result = new ArrayList<String>();
 		StringBuilder temp = new StringBuilder();
 		int index = 0;
@@ -354,3 +388,4 @@ public class SideeXJenkinsPlugin extends Builder {
 		return array;
 	}
 }
+
