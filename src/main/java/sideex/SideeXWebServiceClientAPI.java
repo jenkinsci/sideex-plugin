@@ -203,7 +203,7 @@ public class SideeXWebServiceClientAPI {
 		}
 	}
 
-	public String runTestSuite(Map<String, File> fileParams) throws IOException {
+	public String runTestSuite(Map<String, File> file) throws IOException {
 		URL url = new URL(this.baseURL + "sideex-webservice");
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) url.openConnection();
@@ -225,7 +225,7 @@ public class SideeXWebServiceClientAPI {
 			throw e;
 		}
 		StringBuilder fileSb = new StringBuilder();
-		for (Map.Entry<String, File> fileEntry : fileParams.entrySet()) {
+		for (Map.Entry<String, File> fileEntry : file.entrySet()) {
 			fileSb.append(PREFIX).append(BOUNDARY).append(LINE_END).append(
 					"Content-Disposition: form-data; name=\"file\"; filename=\"" + fileEntry.getKey() + "\"" + LINE_END)
 					.append("Content-Transfer-Encoding: 8bit" + LINE_END).append(LINE_END);
@@ -261,9 +261,11 @@ public class SideeXWebServiceClientAPI {
 		return response.toString();
 	}
 
-	public String getState(final Map<String, String> params) throws IOException {
+	public String getState(String token) throws IOException {
 		StringBuilder response = new StringBuilder();
 		HttpURLConnection conn = null;
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("token", token);
 		String dataParams = getDataString(params);
 
 		URL url = new URL(this.baseURL + "sideex-webservice-state" + dataParams);
@@ -326,7 +328,7 @@ public class SideeXWebServiceClientAPI {
 		conn.disconnect();
 	}
 
-	public String deleteTestSuites(String token) throws IOException {
+	public String deleteReport(String token) throws IOException {
 		URL url = new URL(this.baseURL + "sideex-webservice-delete");
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) url.openConnection();

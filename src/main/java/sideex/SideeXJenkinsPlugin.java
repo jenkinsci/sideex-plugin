@@ -131,7 +131,6 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
 		boolean running = true, passed, first = true;
 		Map<String, File> fileParams = new HashMap<String, File>();
-		Map<String, String> params = new HashMap<String, String>();
 		JSONArray summary;
 
 		if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
@@ -153,10 +152,9 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 			listener.getLogger().println(token);
 
 			while (running) {
-				params.put("token", token);
 
 				try {
-					stateResponse = wsClient.getState(params);
+					stateResponse = wsClient.getState(token);
 				} catch (IOException e) {
 					listener.error(
 							"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's base URL settings and the state of your server");
@@ -183,7 +181,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 						FileUtils.cleanDirectory(reportFolder);
 						Map<String, String> formData = new HashMap<String, String>();
 	                    formData.put("token", token);
-	                    wsClient.download(params, reportFolderPath.getRemote() + "/logs.zip", 1);
+	                    wsClient.download(formData, reportFolderPath.getRemote() + "/logs.zip", 1);
 	                    formData.put("file", "reports.zip");
 	                    wsClient.download(formData, reportFolderPath.getRemote() + "/reports.zip", 0);
 						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/reports.zip",
