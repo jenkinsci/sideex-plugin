@@ -64,18 +64,6 @@ public class HTTPSEnableItem extends BuildDropDownList {
 				return FormValidation.error(e.getMessage());
 			}
 		}
-		
-		public FormValidation doCheckCaFilePath(@QueryParameter String caFilePath) {
-			try {
-				File caFile = new File(caFilePath);
-				if(caFile.isDirectory() || !caFile.exists()) {
-					throw new Exception();
-				}
-				return FormValidation.ok();
-			} catch (Exception e) {
-				return FormValidation.error("Please enter a certificate file path");
-			}
-		}
     }
 	
 	public String getBaseURL() {

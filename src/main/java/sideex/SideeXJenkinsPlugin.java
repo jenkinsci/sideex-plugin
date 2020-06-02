@@ -82,18 +82,6 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 				return FormValidation.error("Please enter a periodically time");
 			}
 		}
-		
-		public FormValidation doCheckInputsFilePath(@QueryParameter String inputsFilePath) {
-			try {
-				File inputsFile = new File(inputsFilePath);
-				if(inputsFile.isDirectory() || !inputsFile.exists()) {
-					throw new Exception();
-				}
-				return FormValidation.ok();
-			} catch (Exception e) {
-				return FormValidation.error("Please enter a test suites file path");
-			}
-		}
 	}
 
 	@Override
