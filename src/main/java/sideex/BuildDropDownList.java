@@ -14,14 +14,14 @@ public abstract class BuildDropDownList implements Describable<BuildDropDownList
 
 	@Override
 	public Descriptor<BuildDropDownList> getDescriptor() {
-		return Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
+		return Jenkins.get().getDescriptorOrDie(getClass());
 	}
 	
 	public SideeXWebServiceClientAPI getClientAPI(@Nonnull Run<?, ?> build, @Nonnull TaskListener listener,
 			String baseURL, ProtocalType type) throws InterruptedException, IOException {
-		SideeXWebServiceClientAPI httpService = new SideeXWebServiceClientAPI(baseURL, type);
+		SideeXWebServiceClientAPI clientAPI = new SideeXWebServiceClientAPI(baseURL, type);
 		
-		return httpService;
+		return clientAPI;
 	}
 }
 

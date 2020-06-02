@@ -61,7 +61,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 		}
 
 		public List<BuildDropDownListDescriptor> getProtocalMenu() {
-			List<BuildDropDownListDescriptor> descriptors = Jenkins.getActiveInstance()
+			List<BuildDropDownListDescriptor> descriptors = Jenkins.get()
 					.getDescriptorList(BuildDropDownList.class);
 			List<BuildDropDownListDescriptor> supportedStrategies = new ArrayList<>(descriptors.size());
 
