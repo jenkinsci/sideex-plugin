@@ -106,6 +106,9 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 			}
 		}
 		
+		if(wsClient == null) 
+			return;
+		
 		
 		FilePath inputsFilePath = workspace.child(getInputsFilePath());
 		FilePath reportFolderPath = workspace.child(getReportFolderPath());
@@ -195,7 +198,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 					listener.getLogger().println("The log can be download at " + logUrl + ".");
 					build.setResult(Result.FAILURE);
 				} else {
-					Thread.sleep(Long.valueOf(this.stateTime));
+					Thread.sleep(Long.parseLong(this.stateTime));
 				}
 			}
 			wsClient.setHTTPSToDefault();

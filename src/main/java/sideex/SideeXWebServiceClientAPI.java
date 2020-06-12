@@ -38,7 +38,7 @@ import java.net.MalformedURLException;
 public class SideeXWebServiceClientAPI {
 	private String baseURL;
 	private String hostname;
-	final int BUFFER_SIZE = 4096;
+	static final int BUFFER_SIZE = 4096;
 	private static final int TIME_OUT = 60 * 1000; // connect server time out
 	private static final String CHARSET = "utf-8";
 	private static final String PREFIX = "--"; // prefix
@@ -215,7 +215,7 @@ public class SideeXWebServiceClientAPI {
 		// Read the server to return information
 		if (conn.getResponseCode() == 200) {
 			InputStream in = conn.getInputStream();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 			String line = null;
 
 			while ((line = reader.readLine()) != null) {
@@ -247,10 +247,11 @@ public class SideeXWebServiceClientAPI {
 
 		if (responseCode == HttpURLConnection.HTTP_OK) {
 			String line;
-			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
 			while ((line = br.readLine()) != null) {
 				response.append(line);
 			}
+			br.close();
 		}
 		conn.disconnect();
 		return response.toString();
@@ -324,7 +325,7 @@ public class SideeXWebServiceClientAPI {
 			// Read the server to return information
 			if (conn.getResponseCode() == 200) {
 				InputStream in = conn.getInputStream();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 				String line = null;
 
 				while ((line = reader.readLine()) != null) {
