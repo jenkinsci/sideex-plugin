@@ -84,6 +84,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public void perform(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
 			throws InterruptedException, IOException {
@@ -162,7 +163,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 
 					if (!getReportFolderPath().equals("")) {
 						if (!reportFolder.exists()) {
-							reportFolder.mkdir();
+							boolean reportDir = reportFolder.mkdirs();
 						}
 						FileUtils.cleanDirectory(reportFolder);
 						Map<String, String> formData = new HashMap<String, String>();
@@ -174,8 +175,8 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 								reportFolderPath.getRemote());
 						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/logs.zip",
 								reportFolderPath.getRemote());
-						new File(reportFolderPath.getRemote() + "/reports.zip").delete();
-						new File(reportFolderPath.getRemote() + "/logs.zip").delete();
+						boolean isDelReports = new File(reportFolderPath.getRemote() + "/reports.zip").delete();
+						boolean isDelLogs = new File(reportFolderPath.getRemote() + "/logs.zip").delete();
 					}
 					listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
 					listener.getLogger().println("The log can be downloaded at " + logUrl + ".");

@@ -30,7 +30,7 @@ public final class Table {
 
     private int rowHeight;
 
-    private int gridMode;
+    private int gridMode = GRID_COLUMN;
 
     private Block initialTableBlock;
 

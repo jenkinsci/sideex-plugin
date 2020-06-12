@@ -95,7 +95,7 @@ public class SideeXWebServiceClientAPI {
 		}
 	}
 
-	public class HTTPSHostNameVerifier implements HostnameVerifier {
+	private static class HTTPSHostNameVerifier implements HostnameVerifier {
 		private String hostname;
 
 		public HTTPSHostNameVerifier(String hostname) {
@@ -162,7 +162,7 @@ public class SideeXWebServiceClientAPI {
 		}
 	}
 
-	public class NullHostNameVerifier implements HostnameVerifier {
+	private static class NullHostNameVerifier implements HostnameVerifier {
 		@Override
 		public boolean verify(String hostname, SSLSession session) {
 			return true;

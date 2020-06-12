@@ -33,7 +33,7 @@ public class Board {
         this.charrs = new ArrayList<>();
         this.preview = "";
         this.showBlockIndex = false;
-        Block.nextIndex = 0;
+        Block.setNextIndex(0);
     }
 
     public Board setInitialBlock(Block initialBlock) {

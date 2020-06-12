@@ -26,10 +26,11 @@ public class UnzipUtility {
      * @param destDirectory
      * @throws IOException
      */
+    @SuppressWarnings("unused")
     public void unzip(String zipFilePath, String destDirectory) throws IOException {
         File destDir = new File(destDirectory);
         if (!destDir.exists()) {
-            destDir.mkdir();
+        	boolean isMkdir = destDir.mkdir();
         }
         ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
         ZipEntry entry = zipIn.getNextEntry();

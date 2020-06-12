@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public final class Block {
 
-    protected static int nextIndex = 0;
+	private static int nextIndex = 0;
 
     private Board board;
 
@@ -108,6 +108,14 @@ public final class Block {
             belowBlock.setY(getY() + getHeight() + (isGridAllowed() ? 1 : 0));
             this.belowBlock = belowBlock;
         }
+    }
+    
+    public static void setNextIndex(int nextIndex) {
+    	Block.nextIndex = nextIndex;
+    }
+    
+    public static int getNextIndex() {
+    	return nextIndex;
     }
 
     protected int getIndex() {
@@ -251,6 +259,8 @@ public final class Block {
                     blockLeftSideSpaces = board.boardWidth - (ix + getWidth() + additionalWidth);
                     break;
                 }
+                default:
+                	break;
             }
             ix += blockLeftSideSpaces;
             if (data == null) {
