@@ -69,7 +69,7 @@
 		<connection>scm:git:git://github.com/jenkinsci/sideex-plugin.git</connection>
 		<developerConnection>scm:git:git@github.com:jenkinsci/sideex-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/sideex-plugin</url>
-	  <tag>sideex-1.0</tag>
+	  <tag>sideex-1.0.0</tag>
   </scm>
 	
 	<repositories>
