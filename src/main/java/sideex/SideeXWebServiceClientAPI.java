@@ -205,9 +205,10 @@ public class SideeXWebServiceClientAPI {
 				while ((len = is.read(buffer)) != -1) {
 					dos.write(buffer, 0, len);
 				}
-			} finally {
-				is.close();
 				dos.writeBytes(LINE_END);
+			} finally {
+				if(is != null)
+					is.close();
 			}
 		}
 		// End sign requested
@@ -295,8 +296,10 @@ public class SideeXWebServiceClientAPI {
 
 				System.out.println("File downloaded");
 			} finally {
-				fileOutputStream.close();
-				inputStream.close();
+				if(fileOutputStream != null)
+					fileOutputStream.close();
+				if(inputStream != null)
+					inputStream.close();
 			}
 		} else {
 			System.out.println("GET request not worked");
