@@ -14,7 +14,6 @@ import hudson.Extension;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
-import jenkins.org.apache.commons.validator.routines.UrlValidator;
 
 public class HTTPSEnableItem extends BuildDropDownList {
 	private String baseURL;
@@ -52,8 +51,7 @@ public class HTTPSEnableItem extends BuildDropDownList {
 
 		public FormValidation doCheckBaseURL(@QueryParameter String baseURL) {
 			try {
-				UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
-				if(!urlValidator.isValid(baseURL)) {
+				if(!URLValidator.urlValidator(baseURL)) {
 					throw new Exception("Invalid base URL");
 				}
 				if(!(new URL(baseURL).getProtocol().equals("https"))) {
