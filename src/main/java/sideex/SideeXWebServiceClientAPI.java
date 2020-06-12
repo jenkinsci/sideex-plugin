@@ -198,9 +198,8 @@ public class SideeXWebServiceClientAPI {
 			dos.writeBytes(fileSb.toString());
 			dos.flush();
 			InputStream is = null;
-			
+			is = new FileInputStream(fileEntry.getValue());
 			try {
-				is = new FileInputStream(fileEntry.getValue());
 				byte[] buffer = new byte[1024];
 				int len = 0;
 				while ((len = is.read(buffer)) != -1) {
@@ -282,8 +281,8 @@ public class SideeXWebServiceClientAPI {
 		int responseCode = conn.getResponseCode();
 		InputStream inputStream = null;
 		FileOutputStream fileOutputStream = null;
-		try {
-			if (responseCode == HttpURLConnection.HTTP_OK) { // success
+		if (responseCode == HttpURLConnection.HTTP_OK) { // success
+			try {
 				inputStream = conn.getInputStream();
 
 				// opens an output stream to save into file
@@ -294,18 +293,16 @@ public class SideeXWebServiceClientAPI {
 					fileOutputStream.write(buffer, 0, bytesRead);
 				}
 
-				
 				System.out.println("File downloaded");
-			} else {
-				System.out.println("GET request not worked");
+			} finally {
+				fileOutputStream.close();
+				inputStream.close();
 			}
-		} finally {
-			fileOutputStream.close();
-			inputStream.close();
-			conn.disconnect();
+		} else {
+			System.out.println("GET request not worked");
 		}
-		
-		
+
+		conn.disconnect();
 	}
 
 	public String deleteReport(String token) throws IOException {
