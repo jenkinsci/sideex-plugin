@@ -28,19 +28,6 @@
 		</license>
 	</licenses>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>sideex</artifactId>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
