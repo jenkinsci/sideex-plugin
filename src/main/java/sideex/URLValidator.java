@@ -11,7 +11,7 @@ public class URLValidator {
 
 	private static final Pattern URL_PATTERN = Pattern.compile(URL_REGEX);
 
-	public static boolean urlValidator(String url) {
+	public boolean urlValidator(String url) {
 
 		if (url == null) {
 			return false;

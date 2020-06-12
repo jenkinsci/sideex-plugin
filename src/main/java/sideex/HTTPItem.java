@@ -56,7 +56,8 @@ public class HTTPItem extends BuildDropDownList {
 
 		public FormValidation doCheckBaseURL(@QueryParameter String baseURL) {
 			try {
-				if(!URLValidator.urlValidator(baseURL)) {
+				URLValidator urlValidator = new URLValidator();
+				if(!urlValidator.urlValidator(baseURL)) {
 					throw new Exception("Invalid base URL");
 				}
 				if(!(new URL(baseURL).getProtocol().equals("http"))) {
