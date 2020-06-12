@@ -197,14 +197,19 @@ public class SideeXWebServiceClientAPI {
 					.append("Content-Transfer-Encoding: 8bit" + LINE_END).append(LINE_END);
 			dos.writeBytes(fileSb.toString());
 			dos.flush();
-			InputStream is = new FileInputStream(fileEntry.getValue());
-			byte[] buffer = new byte[1024];
-			int len = 0;
-			while ((len = is.read(buffer)) != -1) {
-				dos.write(buffer, 0, len);
+			InputStream is = null;
+			
+			try {
+				is = new FileInputStream(fileEntry.getValue());
+				byte[] buffer = new byte[1024];
+				int len = 0;
+				while ((len = is.read(buffer)) != -1) {
+					dos.write(buffer, 0, len);
+				}
+			} finally {
+				is.close();
+				dos.writeBytes(LINE_END);
 			}
-			is.close();
-			dos.writeBytes(LINE_END);
 		}
 		// End sign requested
 		dos.writeBytes(PREFIX + BOUNDARY + PREFIX + LINE_END);
@@ -275,24 +280,32 @@ public class SideeXWebServiceClientAPI {
 		conn.setConnectTimeout(TIME_OUT);
 
 		int responseCode = conn.getResponseCode();
-		if (responseCode == HttpURLConnection.HTTP_OK) { // success
-			InputStream inputStream = conn.getInputStream();
+		InputStream inputStream = null;
+		FileOutputStream fileOutputStream = null;
+		try {
+			if (responseCode == HttpURLConnection.HTTP_OK) { // success
+				inputStream = conn.getInputStream();
 
-			// opens an output stream to save into file
-			FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-			int bytesRead = -1;
-			byte[] buffer = new byte[BUFFER_SIZE];
-			while ((bytesRead = inputStream.read(buffer)) != -1) {
-				fileOutputStream.write(buffer, 0, bytesRead);
+				// opens an output stream to save into file
+				fileOutputStream = new FileOutputStream(filePath);
+				int bytesRead = -1;
+				byte[] buffer = new byte[BUFFER_SIZE];
+				while ((bytesRead = inputStream.read(buffer)) != -1) {
+					fileOutputStream.write(buffer, 0, bytesRead);
+				}
+
+				
+				System.out.println("File downloaded");
+			} else {
+				System.out.println("GET request not worked");
 			}
-
+		} finally {
 			fileOutputStream.close();
 			inputStream.close();
-			System.out.println("File downloaded");
-		} else {
-			System.out.println("GET request not worked");
+			conn.disconnect();
 		}
-		conn.disconnect();
+		
+		
 	}
 
 	public String deleteReport(String token) throws IOException {

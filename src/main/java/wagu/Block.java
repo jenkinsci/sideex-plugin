@@ -88,7 +88,7 @@ public final class Block {
         this.charrsList = new ArrayList<>();
         this.preview = "";
         this.index = nextIndex;
-        Block.nextIndex++;
+        Block.setNextIndex(Block.getNextIndex()+1);
     }
 
     public Block(Board board, int width, int height, String data) {

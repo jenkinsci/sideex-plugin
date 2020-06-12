@@ -43,7 +43,7 @@ public class UnzipUtility {
             } else {
                 // if the entry is a directory, make the directory
                 File dir = new File(filePath);
-                dir.mkdir();
+                boolean isMkdir = dir.mkdir();
             }
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
