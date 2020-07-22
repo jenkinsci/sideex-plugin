@@ -6,12 +6,14 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -19,6 +21,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -36,15 +39,16 @@ import wagu.Board;
 public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 	private final BuildDropDownList protocalMenu;
 	private String stateTime;
-	private String inputsFilePath;
+	private String testProjectFilePath;
 	private String reportFolderPath;
+	private String reportURL;
 	
 	
 	@DataBoundConstructor
-	public SideeXJenkinsPlugin(BuildDropDownList protocalMenu, String stateTime, String inputsFilePath, String reportFolderPath) {
+	public SideeXJenkinsPlugin(BuildDropDownList protocalMenu, String stateTime, String testProjectFilePath, String reportFolderPath) {
 		this.protocalMenu = protocalMenu;
 		this.stateTime = stateTime;
-		this.inputsFilePath = inputsFilePath;
+		this.testProjectFilePath = testProjectFilePath;
 		this.reportFolderPath = reportFolderPath;
 	}
 
@@ -82,12 +86,25 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 				return FormValidation.error("Please enter a periodically time");
 			}
 		}
+		
+		public FormValidation doCheckTestProjectFilePath(@QueryParameter String testProjectFilePath) {
+			try {
+				if(StringUtils.trim(testProjectFilePath).equals("")) {
+					throw new Exception("Please enter certificate file path");
+				}
+				return FormValidation.ok();
+			} catch (Exception e) {
+				return FormValidation.error(e.getMessage());
+			}
+		}
 	}
 
 	@SuppressWarnings("unused")
 	@Override
 	public void perform(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
 			throws InterruptedException, IOException {
+		
+		
 		SideeXWebServiceClientAPI wsClient = null;
 		// Dropdown menu
 		if (protocalMenu instanceof HTTPItem) {
@@ -111,9 +128,9 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 			return;
 		
 		
-		FilePath inputsFilePath = workspace.child(getInputsFilePath());
+		FilePath testProjectFilePath = workspace.child(getTestProjectFilePath());
 		FilePath reportFolderPath = workspace.child(getReportFolderPath());
-		File inputsFile = new File(inputsFilePath.getRemote());
+		File inputsFile = new File(testProjectFilePath.getRemote());
 		File reportFolder = new File(reportFolderPath.getRemote());
 		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
 		boolean running = true, passed, first = true;
@@ -121,7 +138,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 		JSONArray summary;
 
 		if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
-			listener.error("Specified test suites file path '" + inputsFilePath + "' does not exist.");
+			listener.error("Specified test suites file path '" + testProjectFilePath + "' does not exist.");
 			build.setResult(Result.FAILURE);
 		}
 
@@ -178,6 +195,7 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 						boolean isDelReports = new File(reportFolderPath.getRemote() + "/reports.zip").delete();
 						boolean isDelLogs = new File(reportFolderPath.getRemote() + "/logs.zip").delete();
 					}
+					this.reportURL = reportURL;
 					listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
 					listener.getLogger().println("The log can be downloaded at " + logUrl + ".");
 
@@ -205,6 +223,9 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 			wsClient.setHTTPSToDefault();
 		}
 	}
+	
+	
+	
 	
 	void parseLog(String logs, TaskListener listener) {
 		JSONObject log = JSONObject.fromObject(logs);
@@ -240,8 +261,8 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 		return protocalMenu;
 	}
 
-	public String getInputsFilePath() {
-		return inputsFilePath;
+	public String getTestProjectFilePath() {
+		return testProjectFilePath;
 	}
 	
 
@@ -251,6 +272,10 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 
 	public String getReportFolderPath() {
 		return reportFolderPath;
+	}
+
+	public String getReportURL() {
+		return reportURL;
 	}
 
 	public String getSummarryFormat(JSONObject object, int size) {

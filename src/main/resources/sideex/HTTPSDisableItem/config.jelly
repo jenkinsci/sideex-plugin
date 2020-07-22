@@ -3,13 +3,4 @@
     <f:entry title="SideeX web service base URL" field="baseURL">
         <f:textbox default="https://"/>
     </f:entry>
-	<!-- <f:entry title="Checking report periodically every (ms)" field="stateTime">
-        <f:textbox default="2000"/>
-    </f:entry>
-    <f:entry title="Test suites file path" field="inputsFilePath">
-        <f:textbox />
-    </f:entry>
-    <f:entry title="Report directory (Leave blank if no need of report)" field="reportFolderPath">
-        <f:textbox default="./reports"/>
-    </f:entry> -->
 </j:jelly>
