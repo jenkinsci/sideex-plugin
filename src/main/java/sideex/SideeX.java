@@ -1,6 +1,7 @@
 package sideex;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -19,6 +20,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Functions;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -36,20 +38,20 @@ import net.sf.json.JSONObject;
 import wagu.Block;
 import wagu.Board;
 
-public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
+public class SideeX extends Builder implements SimpleBuildStep {
 	private final BuildDropDownList protocalMenu;
 	private String stateTime;
-	private String testProjectFilePath;
+	private String testCaseFilePath;
 	private String reportFolderPath;
 	private String reportURL;
 	
 	
 	@DataBoundConstructor
-	public SideeXJenkinsPlugin(BuildDropDownList protocalMenu, String stateTime, String testProjectFilePath, String reportFolderPath) {
-		this.protocalMenu = protocalMenu;
-		this.stateTime = stateTime;
-		this.testProjectFilePath = testProjectFilePath;
-		this.reportFolderPath = reportFolderPath;
+	public SideeX(BuildDropDownList protocalMenu, String stateTime, String testCaseFilePath, String reportFolderPath) {
+		this.protocalMenu =  protocalMenu;
+		this.stateTime = StringUtils.trim(stateTime);
+		this.testCaseFilePath = StringUtils.trim(testCaseFilePath);
+		this.reportFolderPath = StringUtils.trim(reportFolderPath);
 	}
 
 	@Extension
@@ -87,10 +89,10 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 			}
 		}
 		
-		public FormValidation doCheckTestProjectFilePath(@QueryParameter String testProjectFilePath) {
+		public FormValidation doCheckTestCaseFilePath(@QueryParameter String testCaseFilePath) {
 			try {
-				if(StringUtils.trim(testProjectFilePath).equals("")) {
-					throw new Exception("Please enter certificate file path");
+				if(StringUtils.trim(testCaseFilePath).equals("")) {
+					throw new Exception("Please enter test case file path");
 				}
 				return FormValidation.ok();
 			} catch (Exception e) {
@@ -103,19 +105,26 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 	@Override
 	public void perform(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
 			throws InterruptedException, IOException {
-		
-		
+		this.reportURL = "";
 		SideeXWebServiceClientAPI wsClient = null;
+		
+		build.addAction(new SideeXBuildAction(this));
+		
 		// Dropdown menu
 		if (protocalMenu instanceof HTTPItem) {
 			HTTPItem httpItem = (HTTPItem) protocalMenu;
-			wsClient = this.protocalMenu.getClientAPI(build, listener,httpItem.getBaseURL(), ProtocalType.HTTP);
+			wsClient = this.protocalMenu.getClientAPI(build, listener, httpItem.getBaseURL(), ProtocalType.HTTP);
 		} else if(protocalMenu instanceof HTTPSDisableItem) {
 			HTTPSDisableItem httpsDisableItem = (HTTPSDisableItem) protocalMenu;
-			wsClient = this.protocalMenu.getClientAPI(build, listener,httpsDisableItem.getBaseURL(), ProtocalType.HTTPS_DISABLE);
+			wsClient = this.protocalMenu.getClientAPI(build, listener, httpsDisableItem.getBaseURL(), ProtocalType.HTTPS_DISABLE);
 		} else if(protocalMenu instanceof HTTPSEnableItem) {
 			HTTPSEnableItem httpsEnableItem = (HTTPSEnableItem) protocalMenu;
-			wsClient = this.protocalMenu.getClientAPI(build, listener,httpsEnableItem.getBaseURL(), ProtocalType.HTTPS_ENABLE);
+			wsClient = this.protocalMenu.getClientAPI(build, listener, httpsEnableItem.getBaseURL(), ProtocalType.HTTPS_ENABLE);
+			File inputsFile = new File(httpsEnableItem.getCaFilePath());
+			if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
+				listener.error("Specified Certificate file path '" + httpsEnableItem.getCaFilePath() + "' does not exist.");
+				build.setResult(Result.FAILURE);
+			}
 			try {
 				wsClient.setCertificate(httpsEnableItem.getCaFilePath());
 			} catch (Exception e) {
@@ -128,21 +137,30 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 			return;
 		
 		
-		FilePath testProjectFilePath = workspace.child(getTestProjectFilePath());
+		FilePath testCaseFilePath = workspace.child(getTestCaseFilePath());
 		FilePath reportFolderPath = workspace.child(getReportFolderPath());
-		File inputsFile = new File(testProjectFilePath.getRemote());
+		File testCaseFile = new File(testCaseFilePath.getRemote());
 		File reportFolder = new File(reportFolderPath.getRemote());
 		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
 		boolean running = true, passed, first = true;
 		Map<String, File> fileParams = new HashMap<String, File>();
 		JSONArray summary;
-
-		if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
-			listener.error("Specified test suites file path '" + testProjectFilePath + "' does not exist.");
+		
+		if (!(testCaseFile.exists() && !testCaseFile.isDirectory())) {
+			listener.error("Specified test suites file path '" + testCaseFilePath + "' does not exist.");
 			build.setResult(Result.FAILURE);
 		}
 
-		fileParams.put(inputsFile.getName(), inputsFile);
+		if(!testCaseFile.getName().endsWith("zip")) {
+			ZipUtility zipUtil = new ZipUtility();
+			String[] myFiles = {testCaseFile.getAbsolutePath()};
+			zipUtil.zip(myFiles, workspace.getRemote()+"\\"+testCaseFile.getName()+".zip");
+			testCaseFile = new File(workspace.getRemote()+"\\"+testCaseFile.getName()+".zip");
+		} else {
+			testCaseFile = new File(testCaseFilePath.getRemote());
+		}
+		
+		fileParams.put(testCaseFile.getName(), testCaseFile);
 		try {
 			tokenResponse = wsClient.runTestSuite(fileParams);
 		} catch (IOException e) {
@@ -220,12 +238,19 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 					Thread.sleep(Long.parseLong(this.stateTime));
 				}
 			}
-			wsClient.setHTTPSToDefault();
 		}
+		SideeXWebServiceClientAPI.setHTTPSToDefault();
 	}
 	
-	
-	
+
+
+	@Override
+	public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
+		List<Action> actions = new ArrayList<>();
+		actions.add(new SideeXAction(project));
+		return actions;
+	}
+
 	
 	void parseLog(String logs, TaskListener listener) {
 		JSONObject log = JSONObject.fromObject(logs);
@@ -261,8 +286,8 @@ public class SideeXJenkinsPlugin extends Builder implements SimpleBuildStep {
 		return protocalMenu;
 	}
 
-	public String getTestProjectFilePath() {
-		return testProjectFilePath;
+	public String getTestCaseFilePath() {
+		return testCaseFilePath;
 	}
 	
 

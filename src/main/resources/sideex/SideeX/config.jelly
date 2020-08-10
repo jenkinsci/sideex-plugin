@@ -5,7 +5,7 @@
 	<f:entry title="Checking report periodically every (ms)" field="stateTime">
         <f:textbox default="2000"/>
     </f:entry>
-    <f:entry title="Test project file path" field="testProjectFilePath">
+    <f:entry title="Test case file path" field="testCaseFilePath">
         <f:textbox />
     </f:entry>
     <f:entry title="Report directory (Leave blank if no need of report)" field="reportFolderPath">

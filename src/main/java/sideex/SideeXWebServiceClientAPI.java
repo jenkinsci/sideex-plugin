@@ -47,8 +47,8 @@ public class SideeXWebServiceClientAPI {
 	private static final String LINE_END = "\r\n"; // new line
 	private HTTPSHostNameVerifier httpsHostNameVerifier;
 	private TrustManager[] trustAllCerts;
-	HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-	SSLSocketFactory defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+	static HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+	static SSLSocketFactory defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 
 	public SideeXWebServiceClientAPI(String baseURL, ProtocalType protocalType) throws MalformedURLException {
 		this.baseURL = baseURL;
@@ -65,7 +65,7 @@ public class SideeXWebServiceClientAPI {
 		}
 	}
 	
-	public void setHTTPSToDefault() {
+	public static void setHTTPSToDefault() {
 		HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
 		HttpsURLConnection.setDefaultSSLSocketFactory(defaultSSLSocketFactory);
 	}
