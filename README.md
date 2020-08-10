@@ -4,9 +4,11 @@ SideeX Plugin is a tool that supports playing SideeX-recorded test cases through
 
 See [this document](https://hackmd.io/@sideex/book/%2F%40sideex%2Fwebservice-jenkins-plugin) for more information.
 
-<img src="src/main/resources/images/HTTP.jpg" width="30%">
-<img src="src/main/resources/images/HTTPS_DISABLE.jpg" width="30%">
-<img src="src/main/resources/images/HTTPS_ENABLE.jpg" width="30%">
+<img src="src/main/resources/images/HTTP.jpg" width="50%">
+<img src="src/main/resources/images/HTTPS_DISABLE.jpg" width="50%">
+<img src="src/main/resources/images/HTTPS_ENABLE.jpg" width="50%">
+<img src="src/main/resources/images/view_report1.jpg" width="50%">
+<img src="src/main/resources/images/view_report2.jpg" width="50%">
 
 ## version 1.0.1
 support SideeX WebService 3.3.12
