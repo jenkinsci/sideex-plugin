@@ -9,7 +9,7 @@ public class SideeXBuildAction extends SideeXBaseAction {
 	
 	@Override
 	public String getIconFileName() {
-		return sideeXJenkinsPlugin.getReportURL().equals("")? null: "graph.gif";
+		return sideeXJenkinsPlugin.getReportURL().equals("")? null: "/plugin/sideex/images/48x48/cloud-logo.png";
 	}
 
 	@Override

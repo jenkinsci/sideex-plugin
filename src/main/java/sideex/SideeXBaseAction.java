@@ -1,8 +1,11 @@
 package sideex;
 
 import hudson.Functions;
+import hudson.PluginManager;
+import hudson.PluginWrapper;
 import hudson.model.AbstractItem;
 import hudson.model.Action;
+import jenkins.model.Jenkins;
 
 
 public abstract class SideeXBaseAction implements Action {
@@ -11,8 +14,7 @@ public abstract class SideeXBaseAction implements Action {
 
 	@Override
 	public String getIconFileName() {
-//		return haveURL()? "/plugin/sideex/logo-48.png": null;
-		return haveURL()? "graph.gif": null;
+		return haveURL()? "/plugin/sideex/images/48x48/cloud-logo.png": null;
 	}
 
 	@Override

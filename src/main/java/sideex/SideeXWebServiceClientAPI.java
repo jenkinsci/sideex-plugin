@@ -170,7 +170,8 @@ public class SideeXWebServiceClientAPI {
 	}
 
 	public String runTestSuite(Map<String, File> file) throws IOException {
-		URL url = new URL(this.baseURL + "sideex-webservice");
+		URL url = new URL(this.baseURL + "sideex-webservice/runTestSuites");
+//		URL url = new URL(this.baseURL + "sideex-webservice");
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");
@@ -239,7 +240,8 @@ public class SideeXWebServiceClientAPI {
 		params.put("token", token);
 		String dataParams = getDataString(params);
 
-		URL url = new URL(this.baseURL + "sideex-webservice-state" + dataParams);
+		URL url = new URL(this.baseURL + "sideex-webservice/getState" + dataParams);
+//		URL url = new URL(this.baseURL + "sideex-webservice-state" + dataParams);
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
 
@@ -265,9 +267,11 @@ public class SideeXWebServiceClientAPI {
 	public void download(final Map<String, String> formData, String filePath, int option) throws IOException {
 		String tempBaseURL = this.baseURL;
 		if (option == 0) {
-			tempBaseURL = tempBaseURL + "sideex-webservice-reports";
+			tempBaseURL = tempBaseURL + "sideex-webservice/downloadReports";
+//			tempBaseURL = tempBaseURL + "sideex-webservice-reports";
 		} else {
-			tempBaseURL = tempBaseURL + "sideex-webservice-logs";
+			tempBaseURL = tempBaseURL + "sideex-webservice/downloadLogs";
+//			tempBaseURL = tempBaseURL + "sideex-webservice-logs";
 		}
 
 		String dataParams = getDataString(formData);
@@ -308,8 +312,9 @@ public class SideeXWebServiceClientAPI {
 		conn.disconnect();
 	}
 
-	public String deleteReport(String token) throws IOException {
-		URL url = new URL(this.baseURL + "sideex-webservice-delete");
+	public String deleteJob(String token) throws IOException {
+		URL url = new URL(this.baseURL + "sideex-webservice/deleteJob");
+//		URL url = new URL(this.baseURL + "sideex-webservice-delete");
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");

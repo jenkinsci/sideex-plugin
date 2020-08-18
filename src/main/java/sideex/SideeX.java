@@ -20,7 +20,6 @@ import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.Functions;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -247,6 +246,7 @@ public class SideeX extends Builder implements SimpleBuildStep {
 	@Override
 	public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
 		List<Action> actions = new ArrayList<>();
+		System.out.println("project: "+project);
 		actions.add(new SideeXAction(project));
 		return actions;
 	}
