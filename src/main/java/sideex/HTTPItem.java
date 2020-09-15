@@ -5,7 +5,6 @@ import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
-//import jenkins.org.apache.commons.validator.routines.UrlValidator;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;

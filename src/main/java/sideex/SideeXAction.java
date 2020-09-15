@@ -2,9 +2,7 @@ package sideex;
 
 import javax.annotation.Nonnull;
 
-import hudson.Functions;
 import hudson.model.AbstractItem;
-import hudson.model.Action;
 import hudson.model.Job;
 import hudson.model.ProminentProjectAction;
 import hudson.model.Run;

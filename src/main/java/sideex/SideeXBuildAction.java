@@ -24,7 +24,7 @@ public class SideeXBuildAction extends SideeXBaseAction {
 
 	@Override
 	protected Boolean haveURL() {
-		return null;
+		return false;
 	}
 
 }

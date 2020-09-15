@@ -1,11 +1,7 @@
 package sideex;
 
-import hudson.Functions;
-import hudson.PluginManager;
-import hudson.PluginWrapper;
 import hudson.model.AbstractItem;
 import hudson.model.Action;
-import jenkins.model.Jenkins;
 
 
 public abstract class SideeXBaseAction implements Action {
