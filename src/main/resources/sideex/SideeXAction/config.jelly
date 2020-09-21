@@ -5,5 +5,5 @@
   We don't really have anything here, This is only a placeholder.
 -->
 <j:jelly xmlns:j="jelly:core">
-	<st:include it="${app}" page="sidepanel"/>
+	
 </j:jelly>
