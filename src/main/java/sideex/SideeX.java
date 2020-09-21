@@ -238,7 +238,9 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		}
 		SideeXWebServiceClientAPI.setHTTPSToDefault();
 		if(isTestCaseFolder == true) {
-			testCaseFile.delete();
+			if(!testCaseFile.delete()) {
+				listener.error("Does not exits the "+testCaseFile.getName());
+			}
 		}
 	}
 	
