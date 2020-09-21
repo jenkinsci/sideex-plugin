@@ -65,25 +65,28 @@ public class ZipUtility {
     private void zipDirectory(File folder, String parentFolder,
             ZipOutputStream zos) throws FileNotFoundException, IOException {
     	
-    	if(folder != null && folder.listFiles() != null && folder.listFiles().length > 0) {
-	        for (File file : folder.listFiles()) {
-	            if (file.isDirectory()) {
-	                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
-	                continue;
-	            }
-	            zos.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
-	            BufferedInputStream bis = new BufferedInputStream(
-	                    new FileInputStream(file));
-	            long bytesRead = 0;
-	            byte[] bytesIn = new byte[BUFFER_SIZE];
-	            int read = 0;
-	            while ((read = bis.read(bytesIn)) != -1) {
-	                zos.write(bytesIn, 0, read);
-	                bytesRead += read;
-	            }
-	            zos.closeEntry();
-	            bis.close();
-	        }
+    	if(folder.exists() && folder.isDirectory()) {
+    		File tempFile[] = folder.listFiles();
+    		if(tempFile != null && tempFile.length > 0) {
+		        for (File file : tempFile) {
+		            if (file.isDirectory()) {
+		                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
+		                continue;
+		            }
+		            zos.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
+		            BufferedInputStream bis = new BufferedInputStream(
+		                    new FileInputStream(file));
+		            long bytesRead = 0;
+		            byte[] bytesIn = new byte[BUFFER_SIZE];
+		            int read = 0;
+		            while ((read = bis.read(bytesIn)) != -1) {
+		                zos.write(bytesIn, 0, read);
+		                bytesRead += read;
+		            }
+		            zos.closeEntry();
+		            bis.close();
+		        }
+    		}
     	}
     }
     /**
