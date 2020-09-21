@@ -166,90 +166,79 @@ public class SideeX extends Builder implements SimpleBuildStep {
 			throw e;
 		}
 
-		try {
-			if (!tokenResponse.trim().equals("")) {
-				token = JSONObject.fromObject(tokenResponse).getString("token");
-				listener.getLogger().println(token);
+		if (!tokenResponse.trim().equals("")) {
+			token = JSONObject.fromObject(tokenResponse).getString("token");
+			listener.getLogger().println(token);
 
-				while (running) {
+			while (running) {
 
-					try {
-						stateResponse = wsClient.getState(token);
-					} catch (IOException e) {
-						listener.error(
-								"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's base URL settings and the state of your server");
-						throw e;
+				try {
+					stateResponse = wsClient.getState(token);
+				} catch (IOException e) {
+					listener.error(
+							"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's base URL settings and the state of your server");
+					throw e;
+				}
+				state = JSONObject.fromObject(stateResponse).getJSONObject("webservice").getString("state");
+				if (first && !state.equals("complete")) {
+					listener.getLogger().println("SideeX WebSerivce state is " + state);
+					first = false;
+				}
+
+				if (state.equals("complete")) {
+					listener.getLogger().println("SideeX WebSerivce state is " + state);
+					running = false;
+					passed = JSONObject.fromObject(stateResponse).getJSONObject("reports").getBoolean("passed");
+					reportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("url").toString();
+					logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
+					summary = JSONObject.fromObject(stateResponse).getJSONObject("reports").getJSONArray("summarry");
+
+					if (!getReportFolderPath().equals("")) {
+						if (!reportFolder.exists()) {
+							boolean reportDir = reportFolder.mkdirs();
+						}
+						FileUtils.cleanDirectory(reportFolder);
+						Map<String, String> formData = new HashMap<String, String>();
+	                    formData.put("token", token);
+	                    wsClient.download(formData, reportFolderPath.getRemote() + "/logs.zip", 1);
+	                    formData.put("file", "reports.zip");
+	                    wsClient.download(formData, reportFolderPath.getRemote() + "/reports.zip", 0);
+						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/reports.zip",
+								reportFolderPath.getRemote());
+						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/logs.zip",
+								reportFolderPath.getRemote());
+						boolean isDelReports = new File(reportFolderPath.getRemote() + "/reports.zip").delete();
+						boolean isDelLogs = new File(reportFolderPath.getRemote() + "/logs.zip").delete();
 					}
-					state = JSONObject.fromObject(stateResponse).getJSONObject("webservice").getString("state");
-					if (first && !state.equals("complete")) {
-						listener.getLogger().println("SideeX WebSerivce state is " + state);
-						first = false;
+					this.reportURL = reportURL;
+					listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
+					listener.getLogger().println("The log can be downloaded at " + logUrl + ".");
+
+					for (int i = 0; i < summary.size(); i++) {
+						listener.getLogger().println(getSummarryFormat(JSONObject.fromObject(summary.get(i)), 60));
 					}
-
-					if (state.equals("complete")) {
-						listener.getLogger().println("SideeX WebSerivce state is " + state);
-						running = false;
-						passed = JSONObject.fromObject(stateResponse).getJSONObject("reports").getBoolean("passed");
-						reportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("url").toString();
-						logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
-						summary = JSONObject.fromObject(stateResponse).getJSONObject("reports").getJSONArray("summarry");
-
-						if (!getReportFolderPath().equals("")) {
-							if (!reportFolder.exists()) {
-								boolean reportDir = reportFolder.mkdirs();
-							}
-							FileUtils.cleanDirectory(reportFolder);
-							Map<String, String> formData = new HashMap<String, String>();
-		                    formData.put("token", token);
-		                    wsClient.download(formData, reportFolderPath.getRemote() + "/logs.zip", 1);
-		                    formData.put("file", "reports.zip");
-		                    wsClient.download(formData, reportFolderPath.getRemote() + "/reports.zip", 0);
-							new UnzipUtility().unzip(reportFolderPath.getRemote() + "/reports.zip",
-									reportFolderPath.getRemote());
-							new UnzipUtility().unzip(reportFolderPath.getRemote() + "/logs.zip",
-									reportFolderPath.getRemote());
-							boolean isDelReports = new File(reportFolderPath.getRemote() + "/reports.zip").delete();
-							boolean isDelLogs = new File(reportFolderPath.getRemote() + "/logs.zip").delete();
-						}
-						this.reportURL = reportURL;
-						listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
-						listener.getLogger().println("The log can be downloaded at " + logUrl + ".");
-
-						for (int i = 0; i < summary.size(); i++) {
-							listener.getLogger().println(getSummarryFormat(JSONObject.fromObject(summary.get(i)), 60));
-						}
-						if (passed == false) {
-							listener.error("Test Case Failed");
-							build.setResult(Result.FAILURE);
-						} else {
-							listener.getLogger().println("Test Case Passed");
-						}
-					} else if (state.equals("error")) {
-						running = false;
-						listener.error("SideeX WebService has encountered a runtime error");
-						this.parseLog(JSONObject.fromObject(stateResponse).getJSONObject("webservice").getString("errorMessage"),
-								listener);
-						logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
-						listener.getLogger().println("The log can be download at " + logUrl + ".");
+					if (passed == false) {
+						listener.error("Test Case Failed");
 						build.setResult(Result.FAILURE);
 					} else {
-						Thread.sleep(Long.parseLong(this.stateTime));
+						listener.getLogger().println("Test Case Passed");
 					}
+				} else if (state.equals("error")) {
+					running = false;
+					listener.error("SideeX WebService has encountered a runtime error");
+					this.parseLog(JSONObject.fromObject(stateResponse).getJSONObject("webservice").getString("errorMessage"),
+							listener);
+					logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
+					listener.getLogger().println("The log can be download at " + logUrl + ".");
+					build.setResult(Result.FAILURE);
+				} else {
+					Thread.sleep(Long.parseLong(this.stateTime));
 				}
 			}
-			SideeXWebServiceClientAPI.setHTTPSToDefault();
-		} catch (Exception e) {
-			listener.error(e.getMessage());
-			throw e;
-		} finally {
-			try {
-				if(isTestCaseFolder == true) {
-					testCaseFile.delete();
-				}
-			} catch (Exception e) {
-				listener.error(e.getMessage());
-				throw e;
-			}
+		}
+		SideeXWebServiceClientAPI.setHTTPSToDefault();
+		if(isTestCaseFolder == true) {
+			testCaseFile.delete();
 		}
 	}
 	
