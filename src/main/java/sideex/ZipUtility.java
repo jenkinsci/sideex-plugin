@@ -65,7 +65,7 @@ public class ZipUtility {
     private void zipDirectory(File folder, String parentFolder,
             ZipOutputStream zos) throws FileNotFoundException, IOException {
     	
-    	if(folder.listFiles() != null) {
+    	if(folder != null && folder.listFiles() != null && folder.listFiles().length > 0) {
 	        for (File file : folder.listFiles()) {
 	            if (file.isDirectory()) {
 	                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
