@@ -240,6 +240,7 @@ public class SideeX extends Builder implements SimpleBuildStep {
 			SideeXWebServiceClientAPI.setHTTPSToDefault();
 		} catch (Exception e) {
 			listener.error(e.getMessage());
+			throw e;
 		} finally {
 			try {
 				if(isTestCaseFolder == true) {
@@ -247,6 +248,7 @@ public class SideeX extends Builder implements SimpleBuildStep {
 				}
 			} catch (Exception e) {
 				listener.error(e.getMessage());
+				throw e;
 			}
 		}
 	}
