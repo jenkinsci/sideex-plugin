@@ -64,24 +64,27 @@ public class ZipUtility {
      */
     private void zipDirectory(File folder, String parentFolder,
             ZipOutputStream zos) throws FileNotFoundException, IOException {
-        for (File file : folder.listFiles()) {
-            if (file.isDirectory()) {
-                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
-                continue;
-            }
-            zos.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
-            BufferedInputStream bis = new BufferedInputStream(
-                    new FileInputStream(file));
-            long bytesRead = 0;
-            byte[] bytesIn = new byte[BUFFER_SIZE];
-            int read = 0;
-            while ((read = bis.read(bytesIn)) != -1) {
-                zos.write(bytesIn, 0, read);
-                bytesRead += read;
-            }
-            zos.closeEntry();
-            bis.close();
-        }
+    	
+    	if(folder.listFiles() != null) {
+	        for (File file : folder.listFiles()) {
+	            if (file.isDirectory()) {
+	                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
+	                continue;
+	            }
+	            zos.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
+	            BufferedInputStream bis = new BufferedInputStream(
+	                    new FileInputStream(file));
+	            long bytesRead = 0;
+	            byte[] bytesIn = new byte[BUFFER_SIZE];
+	            int read = 0;
+	            while ((read = bis.read(bytesIn)) != -1) {
+	                zos.write(bytesIn, 0, read);
+	                bytesRead += read;
+	            }
+	            zos.closeEntry();
+	            bis.close();
+	        }
+    	}
     }
     /**
      * Adds a file to the current zip output stream
