@@ -10,7 +10,7 @@
 
 	<groupId>io.jenkins.plugins</groupId>
 	<artifactId>sideex</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1-1-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 
 	<properties>
