@@ -37,7 +37,7 @@ import wagu.Block;
 import wagu.Board;
 
 public class SideeX extends Builder implements SimpleBuildStep {
-	private final BuildDropDownList protocalMenu;
+	private final BuildDropDownList protocolMenu;
 	private String stateTime;
 	private String testCaseFilePath;
 	private String reportFolderPath;
@@ -45,8 +45,8 @@ public class SideeX extends Builder implements SimpleBuildStep {
 	
 	
 	@DataBoundConstructor
-	public SideeX(BuildDropDownList protocalMenu, String stateTime, String testCaseFilePath, String reportFolderPath) {
-		this.protocalMenu =  protocalMenu;
+	public SideeX(BuildDropDownList protocolMenu, String stateTime, String testCaseFilePath, String reportFolderPath) {
+		this.protocolMenu =  protocolMenu;
 		this.stateTime = StringUtils.trim(stateTime);
 		this.testCaseFilePath = StringUtils.trim(testCaseFilePath);
 		this.reportFolderPath = StringUtils.trim(reportFolderPath);
@@ -64,7 +64,7 @@ public class SideeX extends Builder implements SimpleBuildStep {
 			return "Execute SideeX Web Testing";
 		}
 
-		public List<BuildDropDownListDescriptor> getProtocalMenu() {
+		public List<BuildDropDownListDescriptor> getProtocolMenu() {
 			List<BuildDropDownListDescriptor> descriptors = Jenkins.get()
 					.getDescriptorList(BuildDropDownList.class);
 			List<BuildDropDownListDescriptor> supportedStrategies = new ArrayList<>(descriptors.size());
@@ -109,16 +109,17 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		build.addAction(new SideeXBuildAction(this));
 		
 		// Dropdown menu
-		if (protocalMenu instanceof HTTPItem) {
-			HTTPItem httpItem = (HTTPItem) protocalMenu;
-			wsClient = this.protocalMenu.getClientAPI(build, listener, httpItem.getBaseURL(), ProtocalType.HTTP);
-		} else if(protocalMenu instanceof HTTPSDisableItem) {
-			HTTPSDisableItem httpsDisableItem = (HTTPSDisableItem) protocalMenu;
-			wsClient = this.protocalMenu.getClientAPI(build, listener, httpsDisableItem.getBaseURL(), ProtocalType.HTTPS_DISABLE);
-		} else if(protocalMenu instanceof HTTPSEnableItem) {
-			HTTPSEnableItem httpsEnableItem = (HTTPSEnableItem) protocalMenu;
-			wsClient = this.protocalMenu.getClientAPI(build, listener, httpsEnableItem.getBaseURL(), ProtocalType.HTTPS_ENABLE);
-			File inputsFile = new File(httpsEnableItem.getCaFilePath());
+		if (protocolMenu instanceof HTTPItem) {
+			HTTPItem httpItem = (HTTPItem) protocolMenu;
+			wsClient = this.protocolMenu.getClientAPI(build, listener, httpItem.getBaseURL(), ProtocalType.HTTP);
+		} else if(protocolMenu instanceof HTTPSDisableItem) {
+			HTTPSDisableItem httpsDisableItem = (HTTPSDisableItem) protocolMenu;
+			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsDisableItem.getBaseURL(), ProtocalType.HTTPS_DISABLE);
+		} else if(protocolMenu instanceof HTTPSEnableItem) {
+			HTTPSEnableItem httpsEnableItem = (HTTPSEnableItem) protocolMenu;
+			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsEnableItem.getBaseURL(), ProtocalType.HTTPS_ENABLE);
+			FilePath inputsFileFilePath = workspace.child(httpsEnableItem.getCaFilePath());
+			File inputsFile = new File(inputsFileFilePath.getRemote());
 			if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
 				listener.error("Specified Certificate file path '" + httpsEnableItem.getCaFilePath() + "' does not exist.");
 				build.setResult(Result.FAILURE);
@@ -284,8 +285,8 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		listener.getLogger().println(output);
 	}
 	
-	public BuildDropDownList getProtocalMenu() {
-		return protocalMenu;
+	public BuildDropDownList getProtocolMenu() {
+		return protocolMenu;
 	}
 
 	public String getTestCaseFilePath() {
