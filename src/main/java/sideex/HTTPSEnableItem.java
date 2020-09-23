@@ -30,7 +30,7 @@ public class HTTPSEnableItem extends BuildDropDownList {
     
     @Override
     public SideeXWebServiceClientAPI getClientAPI(@Nonnull Run<?, ?> build, @Nonnull TaskListener listener,
-			String baseURL, ProtocalType type) throws InterruptedException, IOException {
+			String baseURL, ProtocolType type) throws InterruptedException, IOException {
 		SideeXWebServiceClientAPI clientAPI = new SideeXWebServiceClientAPI(baseURL, type);
 		
 		return clientAPI;
@@ -55,7 +55,7 @@ public class HTTPSEnableItem extends BuildDropDownList {
 					throw new Exception("Invalid base URL");
 				}
 				if(!(new URL(baseURL).getProtocol().equals("https"))) {
-					throw new Exception("Invalid protocal");
+					throw new Exception("Invalid protocol");
 				}
 				return FormValidation.ok();
 			} catch (Exception e) {

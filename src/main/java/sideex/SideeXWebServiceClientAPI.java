@@ -50,17 +50,16 @@ public class SideeXWebServiceClientAPI {
 	static HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
 	static SSLSocketFactory defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 
-	public SideeXWebServiceClientAPI(String baseURL, ProtocalType protocalType) throws MalformedURLException {
+	public SideeXWebServiceClientAPI(String baseURL, ProtocolType protocolType) throws MalformedURLException {
 		this.baseURL = baseURL;
 		try {
 			this.hostname = new URL(this.baseURL).getHost();
 		} catch (MalformedURLException e) {
 			throw e;
 		}
-		if (protocalType == ProtocalType.HTTPS_DISABLE) {
-			System.out.println("ProtocalType.HTTPS_DISABLE: "+ProtocalType.HTTPS_DISABLE);
+		if (protocolType == ProtocolType.HTTPS_DISABLE) {
 			setHTTPSDisable();
-		} else if (protocalType == ProtocalType.HTTPS_ENABLE) {
+		} else if (protocolType == ProtocolType.HTTPS_ENABLE) {
 			httpsHostNameVerifier = new HTTPSHostNameVerifier(hostname);// Building SSL Trust
 		}
 	}
@@ -158,7 +157,6 @@ public class SideeXWebServiceClientAPI {
 			HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 		} catch (Exception e) {
 			throw e;
-//			e.printStackTrace();
 		}
 	}
 
@@ -171,7 +169,6 @@ public class SideeXWebServiceClientAPI {
 
 	public String runTestSuite(Map<String, File> file) throws IOException {
 		URL url = new URL(this.baseURL + "sideex-webservice/runTestSuites");
-//		URL url = new URL(this.baseURL + "sideex-webservice");
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");
@@ -241,7 +238,6 @@ public class SideeXWebServiceClientAPI {
 		String dataParams = getDataString(params);
 
 		URL url = new URL(this.baseURL + "sideex-webservice/getState" + dataParams);
-//		URL url = new URL(this.baseURL + "sideex-webservice-state" + dataParams);
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("GET");
 
@@ -268,10 +264,8 @@ public class SideeXWebServiceClientAPI {
 		String tempBaseURL = this.baseURL;
 		if (option == 0) {
 			tempBaseURL = tempBaseURL + "sideex-webservice/downloadReports";
-//			tempBaseURL = tempBaseURL + "sideex-webservice-reports";
 		} else {
 			tempBaseURL = tempBaseURL + "sideex-webservice/downloadLogs";
-//			tempBaseURL = tempBaseURL + "sideex-webservice-logs";
 		}
 
 		String dataParams = getDataString(formData);
@@ -314,7 +308,6 @@ public class SideeXWebServiceClientAPI {
 
 	public String deleteJob(String token) throws IOException {
 		URL url = new URL(this.baseURL + "sideex-webservice/deleteJob");
-//		URL url = new URL(this.baseURL + "sideex-webservice-delete");
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) url.openConnection();
 		conn.setRequestMethod("POST");

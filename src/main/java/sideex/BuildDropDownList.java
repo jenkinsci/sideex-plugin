@@ -18,7 +18,7 @@ public abstract class BuildDropDownList implements Describable<BuildDropDownList
 	}
 	
 	public SideeXWebServiceClientAPI getClientAPI(@Nonnull Run<?, ?> build, @Nonnull TaskListener listener,
-			String baseURL, ProtocalType type) throws InterruptedException, IOException {
+			String baseURL, ProtocolType type) throws InterruptedException, IOException {
 		SideeXWebServiceClientAPI clientAPI = new SideeXWebServiceClientAPI(baseURL, type);
 		
 		return clientAPI;

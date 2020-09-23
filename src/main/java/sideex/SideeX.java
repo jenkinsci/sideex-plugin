@@ -111,13 +111,13 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		// Dropdown menu
 		if (protocolMenu instanceof HTTPItem) {
 			HTTPItem httpItem = (HTTPItem) protocolMenu;
-			wsClient = this.protocolMenu.getClientAPI(build, listener, httpItem.getBaseURL(), ProtocalType.HTTP);
+			wsClient = this.protocolMenu.getClientAPI(build, listener, httpItem.getBaseURL(), ProtocolType.HTTP);
 		} else if(protocolMenu instanceof HTTPSDisableItem) {
 			HTTPSDisableItem httpsDisableItem = (HTTPSDisableItem) protocolMenu;
-			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsDisableItem.getBaseURL(), ProtocalType.HTTPS_DISABLE);
+			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsDisableItem.getBaseURL(), ProtocolType.HTTPS_DISABLE);
 		} else if(protocolMenu instanceof HTTPSEnableItem) {
 			HTTPSEnableItem httpsEnableItem = (HTTPSEnableItem) protocolMenu;
-			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsEnableItem.getBaseURL(), ProtocalType.HTTPS_ENABLE);
+			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsEnableItem.getBaseURL(), ProtocolType.HTTPS_ENABLE);
 			FilePath inputsFileFilePath = workspace.child(httpsEnableItem.getCaFilePath());
 			File inputsFile = new File(inputsFileFilePath.getRemote());
 			if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
