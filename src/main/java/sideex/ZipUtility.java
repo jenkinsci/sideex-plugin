@@ -5,10 +5,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import hudson.FilePath;
+import hudson.model.TaskListener;
 /**
  * This utility compresses a list of files to standard ZIP format file.
  * It is able to compress all sub files and sub directories, recursively.
@@ -26,11 +33,14 @@ public class ZipUtility {
      * @param destZipFile The path of the destination zip file
      * @throws FileNotFoundException
      * @throws IOException
+     * @throws InterruptedException 
      */
-    public void zip(List<File> listFiles, String destZipFile) throws FileNotFoundException,
-            IOException {
-        ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destZipFile));
-        for (File file : listFiles) {
+    public void zip(List<FilePath> listFiles, String destZipFile, TaskListener listener) throws FileNotFoundException,
+            IOException, InterruptedException {
+    	Path path = Paths.get(destZipFile);
+    	listener.getLogger().println(path.toAbsolutePath());
+        ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(path));
+        for (FilePath file : listFiles) {
             if (file.isDirectory()) {
                 zipDirectory(file, file.getName(), zos);
             } else {
@@ -47,13 +57,13 @@ public class ZipUtility {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public void zip(String[] files, String destZipFile) throws FileNotFoundException, IOException {
-        List<File> listFiles = new ArrayList<File>();
-        for (int i = 0; i < files.length; i++) {
-            listFiles.add(new File(files[i]));
-        }
-        zip(listFiles, destZipFile);
-    }
+//    public void zip(String[] files, String destZipFile) throws FileNotFoundException, IOException {
+//        List<FilePath> listFiles = new ArrayList<FilePath>();
+//        for (int i = 0; i < files.length; i++) {
+//            listFiles.add(new FilePath(files[i]));
+//        }
+//        zip(listFiles, destZipFile);
+//    }
     /**
      * Adds a directory to the current zip output stream
      * @param folder the directory to be  added
@@ -61,21 +71,49 @@ public class ZipUtility {
      * @param zos the current zip output stream
      * @throws FileNotFoundException
      * @throws IOException
+     * @throws InterruptedException 
      */
-    private void zipDirectory(File folder, String parentFolder,
-            ZipOutputStream zos) throws FileNotFoundException, IOException {
+//    private void zipDirectory(File folder, String parentFolder,
+//            ZipOutputStream zos) throws FileNotFoundException, IOException {
+//    	
+//    	if(folder.exists() && folder.isDirectory()) {
+//    		File tempFile[] = folder.listFiles();
+//    		if(tempFile != null && tempFile.length > 0) {
+//		        for (File file : tempFile) {
+//		            if (file.isDirectory()) {
+//		                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
+//		                continue;
+//		            }
+//		            zos.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
+//		            BufferedInputStream bis = new BufferedInputStream(
+//		                    new FileInputStream(file));
+//		            long bytesRead = 0;
+//		            byte[] bytesIn = new byte[BUFFER_SIZE];
+//		            int read = 0;
+//		            while ((read = bis.read(bytesIn)) != -1) {
+//		                zos.write(bytesIn, 0, read);
+//		                bytesRead += read;
+//		            }
+//		            zos.closeEntry();
+//		            bis.close();
+//		        }
+//    		}
+//    	}
+//    }
+    
+    private void zipDirectory(FilePath folder, String parentFolder,
+            ZipOutputStream zos) throws FileNotFoundException, IOException, InterruptedException {
     	
     	if(folder.exists() && folder.isDirectory()) {
-    		File tempFile[] = folder.listFiles();
-    		if(tempFile != null && tempFile.length > 0) {
-		        for (File file : tempFile) {
+    		List<FilePath>tempFile = folder.list();
+    		if(tempFile != null && tempFile.size() > 0) {
+		        for (FilePath file : tempFile) {
 		            if (file.isDirectory()) {
 		                zipDirectory(file, parentFolder + "/" + file.getName(), zos);
 		                continue;
 		            }
 		            zos.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
-		            BufferedInputStream bis = new BufferedInputStream(
-		                    new FileInputStream(file));
+		            BufferedInputStream bis = new BufferedInputStream(file.read());
 		            long bytesRead = 0;
 		            byte[] bytesIn = new byte[BUFFER_SIZE];
 		            int read = 0;
@@ -95,12 +133,28 @@ public class ZipUtility {
      * @param zos the current zip output stream
      * @throws FileNotFoundException
      * @throws IOException
+     * @throws InterruptedException 
      */
-    private void zipFile(File file, ZipOutputStream zos)
-            throws FileNotFoundException, IOException {
+//    private void zipFile(File file, ZipOutputStream zos)
+//            throws FileNotFoundException, IOException {
+//        zos.putNextEntry(new ZipEntry(file.getName()));
+//        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(
+//                file));
+//        long bytesRead = 0;
+//        byte[] bytesIn = new byte[BUFFER_SIZE];
+//        int read = 0;
+//        while ((read = bis.read(bytesIn)) != -1) {
+//            zos.write(bytesIn, 0, read);
+//            bytesRead += read;
+//        }
+//        zos.closeEntry();
+//        bis.close();
+//    }
+    
+    private void zipFile(FilePath file, ZipOutputStream zos)
+            throws FileNotFoundException, IOException, InterruptedException {
         zos.putNextEntry(new ZipEntry(file.getName()));
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(
-                file));
+        BufferedInputStream bis = new BufferedInputStream(file.read());
         long bytesRead = 0;
         byte[] bytesIn = new byte[BUFFER_SIZE];
         int read = 0;

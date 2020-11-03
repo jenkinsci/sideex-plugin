@@ -1,7 +1,13 @@
 package sideex;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -28,6 +33,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.util.DirScanner;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
@@ -138,32 +144,39 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		
 		FilePath testCaseFilePath = workspace.child(getTestCaseFilePath());
 		FilePath reportFolderPath = workspace.child(getReportFolderPath());
-		File testCaseFile = new File(testCaseFilePath.getRemote());
-		File reportFolder = new File(reportFolderPath.getRemote());
 		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
 		boolean running = true, passed, first = true, isTestCaseFolder = false;
-		Map<String, File> fileParams = new HashMap<String, File>();
+		Map<String, FilePath> fileParams = new HashMap<String, FilePath>();
 		JSONArray summary;
 
-		if(testCaseFile.exists() && !testCaseFile.isDirectory()) {
-			testCaseFile = new File(testCaseFilePath.getRemote());
-		} else if(testCaseFile.isDirectory()) {
-			ZipUtility zipUtil = new ZipUtility();
-			String[] myFiles = {testCaseFile.getAbsolutePath()};
-			zipUtil.zip(myFiles, workspace.getRemote()+"\\"+testCaseFile.getName()+".zip");
-			testCaseFile = new File(workspace.getRemote()+"\\"+testCaseFile.getName()+".zip");
+		//TODO if folder will be zip the dir
+		if(testCaseFilePath.isDirectory()) {
+//			FilePath tempAc = workspace.child(workspace.getRemote()+"//"+testCaseFilePath.getName()+".zip");
+//			tempAc.write();
+//			testCaseFilePath.copyRecursiveTo(new DirScanner.Full(), tempAc, "");
+//			testCaseFilePath.copyRecursiveTo(tempAc);
+			
+//			testCaseFilePath.copyRecursiveTo("", "", tempAc, FilePath.TarCompression.GZIP);
+//			ZipUtility zipUtil = new ZipUtility();
+//			List<FilePath> myFiles = new ArrayList<FilePath>();
+//			myFiles.add(testCaseFilePath);
+//			
+//			workspace.child(workspace.getRemote()+"//"+testCaseFilePath.getName()+".zip").mkdirs();
+////			workspace.child(workspace.getRemote()+"\\"+testCaseFilePath.getName()+".zip");
+//			zipUtil.zip(myFiles, workspace.getRemote()+"//"+testCaseFilePath.getName()+".zip", listener);
+//			
+//			testCaseFilePath = workspace.child(workspace.getRemote()+"\\"+testCaseFilePath.getName()+".zip");
+//
 			isTestCaseFolder = true;
-		} else {
-			listener.error("Specified test suites file path '" + testCaseFilePath + "' does not exist.");
-			build.setResult(Result.FAILURE);
 		}
 		
-		fileParams.put(testCaseFile.getName(), testCaseFile);
+		fileParams.put(testCaseFilePath.getName(), testCaseFilePath);
 		try {
 			tokenResponse = wsClient.runTestSuite(fileParams);
 		} catch (IOException e) {
 			listener.error(
 					"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's settings and the state of your server");
+			listener.error(e.getMessage());
 			throw e;
 		}
 
@@ -195,21 +208,26 @@ public class SideeX extends Builder implements SimpleBuildStep {
 					summary = JSONObject.fromObject(stateResponse).getJSONObject("reports").getJSONArray("summarry");
 
 					if (!getReportFolderPath().equals("")) {
-						if (!reportFolder.exists()) {
-							boolean reportDir = reportFolder.mkdirs();
+						if (!reportFolderPath.exists()) {
+							reportFolderPath.mkdirs();
 						}
-						FileUtils.cleanDirectory(reportFolder);
+						testCaseFilePath.deleteContents();
 						Map<String, String> formData = new HashMap<String, String>();
 	                    formData.put("token", token);
-	                    wsClient.download(formData, reportFolderPath.getRemote() + "/logs.zip", 1);
+	                    
+	                    listener.getLogger().println("Download the logs.zip");
+	                    
+	                    FilePath logs = workspace.child(reportFolderPath.getRemote() + "/logs.zip");
+	                    wsClient.download(formData, logs, 1);
+
 	                    formData.put("file", "reports.zip");
-	                    wsClient.download(formData, reportFolderPath.getRemote() + "/reports.zip", 0);
-						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/reports.zip",
-								reportFolderPath.getRemote());
-						new UnzipUtility().unzip(reportFolderPath.getRemote() + "/logs.zip",
-								reportFolderPath.getRemote());
-						boolean isDelReports = new File(reportFolderPath.getRemote() + "/reports.zip").delete();
-						boolean isDelLogs = new File(reportFolderPath.getRemote() + "/logs.zip").delete();
+	                    listener.getLogger().println("Download the reports.zip");
+	                    FilePath reports = workspace.child(reportFolderPath.getRemote() + "/reports.zip");
+	                    wsClient.download(formData, reports, 0);
+	                    workspace.child(reportFolderPath.getRemote()).unzipFrom(logs.read());
+	                    workspace.child(reportFolderPath.getRemote()).unzipFrom(reports.read());
+	                    logs.delete();
+	                    reports.delete();
 					}
 					this.reportURL = reportURL;
 					listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
@@ -239,8 +257,8 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		}
 		SideeXWebServiceClientAPI.setHTTPSToDefault();
 		if(isTestCaseFolder == true) {
-			if(!testCaseFile.delete()) {
-				listener.error("Does not exits the "+testCaseFile.getName());
+			if(!testCaseFilePath.delete()) {
+				listener.error("Does not exits the "+testCaseFilePath.getName());
 			}
 		}
 	}
