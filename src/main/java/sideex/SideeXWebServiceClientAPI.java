@@ -6,9 +6,6 @@ package sideex;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,10 +13,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -123,10 +116,10 @@ public class SideeXWebServiceClientAPI {
 		}
 	}
 
-	void setCertificate(String caFile) throws Exception {
+	void setCertificate(FilePath caFile) throws Exception {
 		try {
 			CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-			InputStream caFileInputStream = new FileInputStream(caFile);
+			InputStream caFileInputStream = caFile.read();
 			InputStream caInput = caFileInputStream;
 			final Certificate ca;
 			try {

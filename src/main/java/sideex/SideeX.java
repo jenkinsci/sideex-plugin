@@ -1,13 +1,20 @@
 package sideex;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -16,7 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -35,6 +42,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.DirScanner;
 import hudson.util.FormValidation;
+import hudson.util.io.ArchiverFactory;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONArray;
@@ -125,13 +133,12 @@ public class SideeX extends Builder implements SimpleBuildStep {
 			HTTPSEnableItem httpsEnableItem = (HTTPSEnableItem) protocolMenu;
 			wsClient = this.protocolMenu.getClientAPI(build, listener, httpsEnableItem.getBaseURL(), ProtocolType.HTTPS_ENABLE);
 			FilePath inputsFileFilePath = workspace.child(httpsEnableItem.getCaFilePath());
-			File inputsFile = new File(inputsFileFilePath.getRemote());
-			if (!(inputsFile.exists() && !inputsFile.isDirectory())) {
+			if (!(inputsFileFilePath.exists() && !inputsFileFilePath.isDirectory())) {
 				listener.error("Specified Certificate file path '" + httpsEnableItem.getCaFilePath() + "' does not exist.");
 				build.setResult(Result.FAILURE);
 			}
 			try {
-				wsClient.setCertificate(httpsEnableItem.getCaFilePath());
+				wsClient.setCertificate(inputsFileFilePath);
 			} catch (Exception e) {
 				listener.error(e.getMessage());
 				build.setResult(Result.FAILURE);
@@ -141,7 +148,6 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		if(wsClient == null) 
 			return;
 		
-		
 		FilePath testCaseFilePath = workspace.child(getTestCaseFilePath());
 		FilePath reportFolderPath = workspace.child(getReportFolderPath());
 		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
@@ -149,24 +155,16 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		Map<String, FilePath> fileParams = new HashMap<String, FilePath>();
 		JSONArray summary;
 
-		//TODO if folder will be zip the dir
 		if(testCaseFilePath.isDirectory()) {
-//			FilePath tempAc = workspace.child(workspace.getRemote()+"//"+testCaseFilePath.getName()+".zip");
-//			tempAc.write();
-//			testCaseFilePath.copyRecursiveTo(new DirScanner.Full(), tempAc, "");
-//			testCaseFilePath.copyRecursiveTo(tempAc);
+			FilePath tempDir = workspace.child(workspace.getRemote()+"//"+testCaseFilePath.getName());
+			if(!testCaseFilePath.getRemote().equals(tempDir.getRemote())) {
+				tempDir.mkdirs();
+				testCaseFilePath.copyRecursiveTo(tempDir);
+			}
 			
-//			testCaseFilePath.copyRecursiveTo("", "", tempAc, FilePath.TarCompression.GZIP);
-//			ZipUtility zipUtil = new ZipUtility();
-//			List<FilePath> myFiles = new ArrayList<FilePath>();
-//			myFiles.add(testCaseFilePath);
-//			
-//			workspace.child(workspace.getRemote()+"//"+testCaseFilePath.getName()+".zip").mkdirs();
-////			workspace.child(workspace.getRemote()+"\\"+testCaseFilePath.getName()+".zip");
-//			zipUtil.zip(myFiles, workspace.getRemote()+"//"+testCaseFilePath.getName()+".zip", listener);
-//			
-//			testCaseFilePath = workspace.child(workspace.getRemote()+"\\"+testCaseFilePath.getName()+".zip");
-//
+			FilePath tempZip = workspace.child(testCaseFilePath.getName()+".zip");
+		    tempDir.zip(tempZip);
+		    testCaseFilePath = tempZip;
 			isTestCaseFolder = true;
 		}
 		
@@ -263,8 +261,6 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		}
 	}
 	
-
-
 	@Override
 	public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
 		List<Action> actions = new ArrayList<>();
@@ -272,7 +268,6 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		return actions;
 	}
 
-	
 	void parseLog(String logs, TaskListener listener) {
 		JSONObject log = JSONObject.fromObject(logs);
 		for (int i = 0; i < log.getJSONArray("logs").size(); i++) {
