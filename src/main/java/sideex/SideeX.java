@@ -54,16 +54,14 @@ public class SideeX extends Builder implements SimpleBuildStep {
 	private final BuildDropDownList protocolMenu;
 	private String stateTime;
 	private String testCaseFilePath;
-	private String reportFolderPath;
 	private String reportURL;
 	
 	
 	@DataBoundConstructor
-	public SideeX(BuildDropDownList protocolMenu, String stateTime, String testCaseFilePath, String reportFolderPath) {
+	public SideeX(BuildDropDownList protocolMenu, String stateTime, String testCaseFilePath) {
 		this.protocolMenu =  protocolMenu;
 		this.stateTime = StringUtils.trim(stateTime);
 		this.testCaseFilePath = StringUtils.trim(testCaseFilePath);
-		this.reportFolderPath = StringUtils.trim(reportFolderPath);
 	}
 
 	@Extension
@@ -149,20 +147,19 @@ public class SideeX extends Builder implements SimpleBuildStep {
 			return;
 		
 		FilePath testCaseFilePath = workspace.child(getTestCaseFilePath());
-		FilePath reportFolderPath = workspace.child(getReportFolderPath());
-		String tokenResponse = "", token = "", stateResponse = "", state = "", reportURL = "", logUrl = "";
+		String tokenResponse = "", token = "", stateResponse = "", state = "", logUrl = "";
 		boolean running = true, passed, first = true, isTestCaseFolder = false;
 		Map<String, FilePath> fileParams = new HashMap<String, FilePath>();
 		JSONArray summary;
 
-		if(testCaseFilePath.isDirectory()) {
-			FilePath tempDir = workspace.child(workspace.getRemote()+"//"+testCaseFilePath.getName());
-			if(!testCaseFilePath.getRemote().equals(tempDir.getRemote())) {
-				tempDir.mkdirs();
-				testCaseFilePath.copyRecursiveTo(tempDir);
-			}
+		if(!testCaseFilePath.exists()) {
+			throw new Error("Do not exist the file "+ testCaseFilePath.getRemote());
+		} else if(testCaseFilePath.isDirectory()) {
+			FilePath tempDir = workspace.child(workspace.getRemote());
+			tempDir = tempDir.createTempDir(testCaseFilePath.getName(), null);
+			testCaseFilePath.copyRecursiveTo(tempDir);
 			
-			FilePath tempZip = workspace.child(testCaseFilePath.getName()+".zip");
+			FilePath tempZip = workspace.child(tempDir.getName()+".zip");
 		    tempDir.zip(tempZip);
 		    testCaseFilePath = tempZip;
 			isTestCaseFolder = true;
@@ -170,66 +167,40 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		
 		fileParams.put(testCaseFilePath.getName(), testCaseFilePath);
 		try {
-			tokenResponse = wsClient.runTestSuite(fileParams);
+			tokenResponse = JSONObject.fromObject(wsClient.runTestSuite(fileParams)).getString("token");
 		} catch (IOException e) {
-			listener.error(
-					"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's settings and the state of your server");
+			listener.error("SideeX WebService Plugin cannot connect to your server, " + 
+							"please check SideeXWebServicePlugin's settings and the state of your server");
 			listener.error(e.getMessage());
 			throw e;
 		}
 
 		if (!tokenResponse.trim().equals("")) {
-			token = JSONObject.fromObject(tokenResponse).getString("token");
-			listener.getLogger().println(token);
+			listener.getLogger().println("SideeX WebService Token: "+tokenResponse);
 
 			while (running) {
-
 				try {
-					stateResponse = wsClient.getState(token);
+					stateResponse = wsClient.getState(tokenResponse);
 				} catch (IOException e) {
-					listener.error(
-							"SideeX WebService Plugin cannot connect to your server, please check SideeXWebServicePlugin's base URL settings and the state of your server");
+					listener.error("SideeX WebService Plugin cannot connect to your server, "+ 
+								"please check SideeXWebServicePlugin's base URL settings and the state of your server");
 					throw e;
 				}
 				state = JSONObject.fromObject(stateResponse).getJSONObject("webservice").getString("state");
 				if (first && !state.equals("complete")) {
 					listener.getLogger().println("SideeX WebSerivce state is " + state);
-					first = false;
+					first = false; 	
 				}
 
 				if (state.equals("complete")) {
 					listener.getLogger().println("SideeX WebSerivce state is " + state);
 					running = false;
 					passed = JSONObject.fromObject(stateResponse).getJSONObject("reports").getBoolean("passed");
-					reportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("url").toString();
-					logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
+					this.reportURL = JSONObject.fromObject(stateResponse).getJSONObject("reports").getString("url").toString();
 					summary = JSONObject.fromObject(stateResponse).getJSONObject("reports").getJSONArray("summarry");
 
-					if (!getReportFolderPath().equals("")) {
-						if (!reportFolderPath.exists()) {
-							reportFolderPath.mkdirs();
-						}
-						testCaseFilePath.deleteContents();
-						Map<String, String> formData = new HashMap<String, String>();
-	                    formData.put("token", token);
-	                    
-	                    listener.getLogger().println("Download the logs.zip");
-	                    
-	                    FilePath logs = workspace.child(reportFolderPath.getRemote() + "/logs.zip");
-	                    wsClient.download(formData, logs, 1);
-
-	                    formData.put("file", "reports.zip");
-	                    listener.getLogger().println("Download the reports.zip");
-	                    FilePath reports = workspace.child(reportFolderPath.getRemote() + "/reports.zip");
-	                    wsClient.download(formData, reports, 0);
-	                    workspace.child(reportFolderPath.getRemote()).unzipFrom(logs.read());
-	                    workspace.child(reportFolderPath.getRemote()).unzipFrom(reports.read());
-	                    logs.delete();
-	                    reports.delete();
-					}
-					this.reportURL = reportURL;
-					listener.getLogger().println("The test report can be downloaded at " + reportURL + ".");
-					listener.getLogger().println("The log can be downloaded at " + logUrl + ".");
+					this.parseError(JSONObject.fromObject(stateResponse).getJSONObject("webservice"), listener);
+					listener.getLogger().println("The test report can be downloaded at " + this.reportURL + ".");
 
 					for (int i = 0; i < summary.size(); i++) {
 						listener.getLogger().println(getSummarryFormat(JSONObject.fromObject(summary.get(i)), 60));
@@ -243,10 +214,7 @@ public class SideeX extends Builder implements SimpleBuildStep {
 				} else if (state.equals("error")) {
 					running = false;
 					listener.error("SideeX WebService has encountered a runtime error");
-					this.parseLog(JSONObject.fromObject(stateResponse).getJSONObject("webservice").getString("errorMessage"),
-							listener);
-					logUrl = JSONObject.fromObject(stateResponse).getJSONObject("logs").getString("url").toString();
-					listener.getLogger().println("The log can be download at " + logUrl + ".");
+					this.parseError(JSONObject.fromObject(stateResponse).getJSONObject("webservice"), listener);
 					build.setResult(Result.FAILURE);
 				} else {
 					Thread.sleep(Long.parseLong(this.stateTime));
@@ -268,12 +236,13 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		return actions;
 	}
 
-	void parseLog(String logs, TaskListener listener) {
-		JSONObject log = JSONObject.fromObject(logs);
-		for (int i = 0; i < log.getJSONArray("logs").size(); i++) {
-			showRunnerLog(JSONObject.fromObject(log.getJSONArray("logs").get(i)).getString("type"),
-					JSONObject.fromObject(log.getJSONArray("logs").get(i)).getString("message"), listener);
-		}
+	void parseError(JSONObject webservice, TaskListener listener) {
+		try {
+			for (int i = 0; i < webservice.getJSONArray("error").size(); i++) {
+				showRunnerLog(JSONObject.fromObject(webservice.getJSONArray("error").get(i)).getString("type"),
+						JSONObject.fromObject(webservice.getJSONArray("error").get(i)).getString("message"), listener);
+			}
+		} catch (Exception e) {}
 	}
 
 	void showRunnerLog(String type, String str, TaskListener listener) {
@@ -311,9 +280,6 @@ public class SideeX extends Builder implements SimpleBuildStep {
 		return stateTime;
 	}
 
-	public String getReportFolderPath() {
-		return reportFolderPath;
-	}
 
 	public String getReportURL() {
 		return reportURL;

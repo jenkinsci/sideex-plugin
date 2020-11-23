@@ -8,7 +8,4 @@
     <f:entry title="Test case file path" field="testCaseFilePath">
         <f:textbox />
     </f:entry>
-    <f:entry title="Report directory (Leave blank if no need of report)" field="reportFolderPath">
-        <f:textbox default="./reports"/>
-    </f:entry>
 </j:jelly>
