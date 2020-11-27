@@ -10,8 +10,11 @@ See [this document](https://hackmd.io/@sideex/book/%2F%40sideex%2Fwebservice-jen
 <img src="src/main/resources/images/view_report1.jpg" width="50%">
 <img src="src/main/resources/images/view_report2.jpg" width="50%">
 
+## version 1.0.2
+Support SideeX WebService 3.4.0
+
 ## version 1.0.1
-support SideeX WebService 3.3.12
+Support SideeX WebService 3.3.12
 
 ## version 1.0
-support SideeX WebService 3.3.11
+Support SideeX WebService 3.3.11
