@@ -1,0 +1,24 @@
+_extends: .github
+categories:
+  - title: 🚀 New features and improvements
+    labels:
+      - enhancement
+      - feature
+      - rfe
+  - title: 🐛 Bug fixes
+    labels:
+      - bug
+      - fix
+      - bugfix
+      - regression
+  # Default label used by Dependabot
+  - title: 📦 Dependency updates
+    label: dependencies
+  - title: 👻 Maintenance
+    labels: 
+      - chore
+      - internal
+  - title: 🚦 Tests
+    labels: 
+      - test
+      - tests
