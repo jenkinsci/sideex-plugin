@@ -171,73 +171,6 @@ public class SideeXWebServiceClientAPI {
 		}
 	}
 
-//	public String runTestSuite(Map<String, File> file, String test) throws IOException {
-//		URL url = new URL(this.baseURL + "sideex-webservice/runTestSuites");
-//		HttpURLConnection conn = null;
-//		conn = (HttpURLConnection) url.openConnection();
-//		conn.setRequestMethod("POST");
-//		conn.setReadTimeout(TIME_OUT);
-//		conn.setConnectTimeout(TIME_OUT);
-//		conn.setDoOutput(true);
-//		conn.setDoInput(true);
-//		conn.setUseCaches(false);// Post request cannot use cache
-//		// Set the request headers
-//		conn.setRequestProperty("Connection", "Keep-Alive");
-//		conn.setRequestProperty("Charset", "UTF-8");
-//		conn.setRequestProperty("Content-Type", CONTENT_TYPE + ";boundary=" + BOUNDARY);
-//
-//		DataOutputStream dos = null;
-//		try {
-//			dos = new DataOutputStream(conn.getOutputStream());
-//		} catch (IOException e) {
-//			throw e;
-//		}
-//		StringBuilder fileSb = new StringBuilder();
-//		for (Map.Entry<String, File> fileEntry : file.entrySet()) {
-//			fileSb.append(PREFIX).append(BOUNDARY).append(LINE_END).append(
-//					"Content-Disposition: form-data; name=\"file\"; filename=\"" + fileEntry.getKey() + "\"" + LINE_END)
-//					.append("Content-Transfer-Encoding: 8bit" + LINE_END).append(LINE_END);
-//			dos.writeBytes(fileSb.toString());
-//			dos.flush();
-//			InputStream is = null;
-//			is = new FileInputStream(fileEntry.getValue());
-//			try {
-//				byte[] buffer = new byte[1024];
-//				int len = 0;
-//				while ((len = is.read(buffer)) != -1) {
-//					dos.write(buffer, 0, len);
-//				}
-//				dos.writeBytes(LINE_END);
-//			} finally {
-//				if(is != null)
-//					is.close();
-//			}
-//		}
-//		// End sign requested
-//		dos.writeBytes(PREFIX + BOUNDARY + PREFIX + LINE_END);
-//		dos.flush();
-//		dos.close();
-//
-//		StringBuilder response = new StringBuilder();
-//		// Read the server to return information
-//		try {
-//			if (conn.getResponseCode() == 200) {
-//				InputStream in = conn.getInputStream();
-//				BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-//				String line = null;
-//
-//				while ((line = reader.readLine()) != null) {
-//					response.append(line);
-//				}
-//				reader.close();
-//			}
-//			conn.disconnect();
-//		} catch (IOException e) {
-//			throw e;
-//		}
-//		
-//		return response.toString();
-//	}
 	public String runTestSuite(Map<String, FilePath> FilePath) throws IOException {
 		URL url = new URL(this.baseURL + "sideex-webservice/runTestSuites");
 		HttpURLConnection conn = null;
@@ -303,72 +236,6 @@ public class SideeXWebServiceClientAPI {
 		conn.disconnect();
 		return response.toString();
 	}
-	
-//	public String runTestSuite(Map<String, FilePath> FilePath) throws IOException {
-//		URL url = new URL(this.baseURL + "sideex-webservice/runTestSuites");
-//		HttpURLConnection conn = null;
-//		conn = (HttpURLConnection) url.openConnection();
-//		conn.setRequestMethod("POST");
-//		conn.setReadTimeout(TIME_OUT);
-//		conn.setConnectTimeout(TIME_OUT);
-//		conn.setDoOutput(true);
-//		conn.setDoInput(true);
-//		conn.setUseCaches(false);// Post request cannot use cache
-//		// Set the request headers
-//		conn.setRequestProperty("Connection", "Keep-Alive");
-//		conn.setRequestProperty("Charset", "UTF-8");
-//		conn.setRequestProperty("Content-Type", CONTENT_TYPE + ";boundary=" + BOUNDARY);
-//
-//		DataOutputStream dos = null;
-//		try {
-//			dos = new DataOutputStream(conn.getOutputStream());
-//		} catch (IOException e) {
-//			throw e;
-//		}
-//		StringBuilder fileSb = new StringBuilder();
-//		for (Map.Entry<String, FilePath> fileEntry : FilePath.entrySet()) {
-//			fileSb.append(PREFIX).append(BOUNDARY).append(LINE_END).append(
-//					"Content-Disposition: form-data; name=\"file\"; filename=\"" + fileEntry.getKey() + "\"" + LINE_END)
-//					.append("Content-Transfer-Encoding: 8bit" + LINE_END).append(LINE_END);
-//			dos.writeBytes(fileSb.toString());
-//			dos.flush();
-//			InputStream is = null;
-//			try {
-//				is = fileEntry.getValue().read();
-//				byte[] buffer = new byte[1024];
-//				int len = 0;
-//				while ((len = is.read(buffer)) != -1) {
-//					dos.write(buffer, 0, len);
-//				}
-//				dos.writeBytes(LINE_END);
-//			} catch (IOException | InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			} finally {
-//				if(is != null)
-//					is.close();
-//			}
-//		}
-//		// End sign requested
-//		dos.writeBytes(PREFIX + BOUNDARY + PREFIX + LINE_END);
-//		dos.flush();
-//		dos.close();
-//
-//		StringBuilder response = new StringBuilder();
-//		// Read the server to return information
-//		if (conn.getResponseCode() == 200) {
-//			InputStream in = conn.getInputStream();
-//			BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-//			String line = null;
-//
-//			while ((line = reader.readLine()) != null) {
-//				response.append(line);
-//			}
-//			reader.close();
-//		}
-//		conn.disconnect();
-//		return response.toString();
-//	}
 
 	public String getState(String token) throws IOException {
 		StringBuilder response = new StringBuilder();
@@ -421,7 +288,6 @@ public class SideeXWebServiceClientAPI {
 		InputStream inputStream = null;
 		
 		
-//		OutputStream out = Files.newOutputStream(file.toPath(), StandardOpenOption.CREATE_NEW);
 		OutputStream dos = null;
 		try {
 			dos = filePath.write();
@@ -450,49 +316,6 @@ public class SideeXWebServiceClientAPI {
 		}
 
 		conn.disconnect();
-//		String tempBaseURL = this.baseURL;
-//		if (option == 0) {
-//			tempBaseURL = tempBaseURL + "sideex-webservice/downloadReports";
-//		} else {
-//			tempBaseURL = tempBaseURL + "sideex-webservice/downloadLogs";
-//		}
-//
-//		String dataParams = getDataString(formData);
-//		URL url = new URL(tempBaseURL + dataParams);
-//
-//		HttpURLConnection conn = null;
-//		conn = (HttpURLConnection) url.openConnection();
-//		conn.setRequestMethod("GET");
-//		conn.setReadTimeout(TIME_OUT);
-//		conn.setConnectTimeout(TIME_OUT);
-//
-//		int responseCode = conn.getResponseCode();
-//		InputStream inputStream = null;
-//		FileOutputStream fileOutputStream = null;
-//		if (responseCode == HttpURLConnection.HTTP_OK) { // success
-//			try {
-//				inputStream = conn.getInputStream();
-//
-//				// opens an output stream to save into file
-//				fileOutputStream = new FileOutputStream(filePath);
-//				int bytesRead = -1;
-//				byte[] buffer = new byte[BUFFER_SIZE];
-//				while ((bytesRead = inputStream.read(buffer)) != -1) {
-//					fileOutputStream.write(buffer, 0, bytesRead);
-//				}
-//
-//				System.out.println("File downloaded");
-//			} finally {
-//				if(fileOutputStream != null)
-//					fileOutputStream.close();
-//				if(inputStream != null)
-//					inputStream.close();
-//			}
-//		} else {
-//			System.out.println("GET request not worked");
-//		}
-//
-//		conn.disconnect();
 	}
 
 	public String deleteJob(String token) throws IOException {

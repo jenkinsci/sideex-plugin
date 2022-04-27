@@ -202,9 +202,22 @@ public class SideeX extends Builder implements SimpleBuildStep {
 					this.parseError(JSONObject.fromObject(stateResponse).getJSONObject("webservice"), listener);
 					listener.getLogger().println("The test report can be downloaded at " + this.reportURL + ".");
 
-					for (int i = 0; i < summary.size(); i++) {
-						listener.getLogger().println(getSummarryFormat(JSONObject.fromObject(summary.get(i)), 60));
+					boolean isJSONArray = summary.get(0).getClass().equals(JSONArray.class);
+
+					if(isJSONArray) {
+						JSONArray tmpSummaryArr;
+						for (int i = 0; i < summary.size(); i++) {
+							tmpSummaryArr = (JSONArray) summary.get(i);
+							for(int j = 0; j < tmpSummaryArr.size(); j++){
+								listener.getLogger().println(getSummarryFormat(JSONObject.fromObject(tmpSummaryArr.get(j)), 60));
+							}
+						}
+					} else {
+						for (int i = 0; i < summary.size(); i++) {
+							listener.getLogger().println(getSummarryFormat(JSONObject.fromObject(summary.get(i)), 60));
+						}
 					}
+					
 					if (passed == false) {
 						listener.error("Test Case Failed");
 						build.setResult(Result.FAILURE);
