@@ -11,7 +11,7 @@ See [this document](https://hackmd.io/@sideex/book/%2F%40sideex%2Fwebservice-jen
 <img src="src/main/resources/images/view_report2.jpg" width="50%">
 
 ## version 1.0.3
-Support SideeX WebService 3.7.2
+Support SideeX WebService 3.7.3
 
 ## version 1.0.2
 Support SideeX WebService 3.4.0
